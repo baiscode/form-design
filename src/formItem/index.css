@@ -1,0 +1,47 @@
+.flex-box{
+  margin: 5px 0;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+}
+.form-item{
+  cursor: pointer;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.form-item .form-item-label{
+  margin-right: 5px;
+  min-width: 80px;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: top;
+}
+.form-item .form-item-box{
+  display: inline-block;
+}
+.active{
+  background: #ddeeff;
+}
+.required::before{
+  content: "*";
+  color: #f56c6c;
+  margin-right: 4px;
+}
+.remove-icon{
+  color: red;
+  margin-left: 5px;
+  cursor: pointer;
+  position: absolute;
+  right: 3px;
+  top: 5px;
+}
+.hidden-icon{
+  visibility: hidden;
+}
+.upload-tip{
+  font-size: 12px;
+  color: #606266;
+  line-height: 20px;
+}
