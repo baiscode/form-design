@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './index.css';
 import Cell from '../cell';
 import { connect } from 'react-redux';
 import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } from 'antd';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import store from '../store/store';
+
+const objCopy = function(target) {
+  if(typeof target === 'object') {
+    const copyTarget = Array.isArray(target) ? [] : {};
+    for(let i in target) {
+      copyTarget[i] = objCopy(target[i]);
+    }
+    return copyTarget;
+  }else {
+    return target;
+  }
+}
 
 const addIcon = (addRow) => {
   return <PlusCircleOutlined onClick={() => addRow()}/>
@@ -88,35 +100,54 @@ const CheckFormItem = ({ formModel }) => {
          </section>
 }
 
-const SelectFormItem = ({ formModel }) => {
-  const addRow = () => {
-    console.log(formModel);
+
+const SelectFormItem = ({ formModel, addOption }) => {
+  const [options, setOptions] = useState([]);
+  const addRow = async function() {
+    await addOption();
+    const options = objCopy(formModel.options);
+    options.forEach((item, index) => {
+      item.key = String(index);
+    })
+    setOptions(options);
   }
+
   const columns = [
     {
       title: '名称',
-      dataIndex: 'label'
+      dataIndex: 'label',
+      key: 'label',
+      render(text, record, index) {
+        return <Input defaultValue={text} size="mini"/>
+      }
     },
     {
       title: '值',
-      dataIndex: 'value'
+      dataIndex: 'value',
+      key: 'value',
+      render(text, record, index) {
+        return <Input defaultValue={text} size="mini"/>
+      }
     },
     {
-      title: addIcon(addRow)
+      title: addIcon(addRow),
+      dataIndex: 'addBtn',
+      key: 'addBtn'
     }
   ]
+
   return <section>
           <Form.Item label="占位文本" name="placeholder">
             <Input placeholder="请输入占位文本"></Input>
           </Form.Item>
           <Form.Item label="选项">
-            <Table columns={columns}></Table>
+            <Table columns={columns} dataSource={options} pagination={false}></Table>
           </Form.Item>
         </section>
 }
 
 
-const FormItem = ({ formItemType, formModel }) => {
+const FormItem = ({ formItemType, formModel, addOption }) => {
   switch (formItemType) {
     case 'TEXT':
     case 'TEXTAREA':
@@ -131,9 +162,9 @@ const FormItem = ({ formItemType, formModel }) => {
       return  <UploadFormItem formModel={formModel}></UploadFormItem>
     case 'CHECKBOX':
     case 'RADIO':
-      return  <CheckFormItem formModel={formModel}></CheckFormItem>
+      return  <CheckFormItem formModel={formModel} addOption={addOption}></CheckFormItem>
     case 'SELECT':
-      return <SelectFormItem formModel={formModel}></SelectFormItem>
+      return <SelectFormItem formModel={formModel} addOption={addOption}></SelectFormItem>
     default:
       return null
   }
@@ -365,6 +396,7 @@ class MainComponent extends React.Component {
       return false;
     }
     confForm.options.push({ label: '', value: '' });
+    this.setState({ confForm: confForm });
   }
 
   removeOption(row) {
@@ -474,7 +506,11 @@ class MainComponent extends React.Component {
                 </Radio.Group>
               </Form.Item>
 
-              <FormItem formItemType={state.formItemType} formModel={state.confForm}></FormItem>
+              <FormItem 
+                formItemType={state.formItemType} 
+                formModel={state.confForm}
+                addOption={() => this.addOption()}
+              ></FormItem>
 
               <Form.Item label="是否必填" name="isRequired" shouldUpdate>
                 <Switch checked={state.confForm.isRequired} onChange={() => this.requireChange()}></Switch>
