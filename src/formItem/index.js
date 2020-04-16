@@ -83,10 +83,10 @@ class FormItemComponent extends React.Component {
       characterData: true,
     });
     store.subscribe(() => {
-      const newState = store.getState();
-      this.setState({
-        activeItem: newState.activeItem
-      })
+      const { activeItem } = store.getState();
+      if(activeItem !== this.state.activeItem) {
+        this.setState({ activeItem: activeItem })
+      }
     })
   }
 

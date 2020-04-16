@@ -6,25 +6,31 @@ import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } fro
 import { PlusCircleOutlined } from '@ant-design/icons';
 import store from '../store/store';
 
+const addIcon = (addRow) => {
+  return <PlusCircleOutlined onClick={() => addRow()}/>
+}
+
 const TextFormItem = () => {
-  return  <Form.Item label="占位文本" name="placeholder">
-            <Input placeholder="请输入占位文本" />
-          </Form.Item>
+  return <section>
+            <Form.Item label="占位文本" name="placeholder">
+              <Input placeholder="请输入占位文本" />
+            </Form.Item>
+         </section>  
 }
 
 const NumberFormItem = () => {
-  return  <span>
+  return  <section>
             <Form.Item label="最大值" name="max">
               <InputNumber />
             </Form.Item>
             <Form.Item label="最小值" name="min">
               <InputNumber />
             </Form.Item>
-          </span>
+          </section>
 }
 
 const DatePickerFormItem = () => {
-  return <span>
+  return <section>
           <Form.Item label="显示类型" name="dateType">
             <Radio.Group size="small">
               <Radio.Button label="date">日期</Radio.Button>
@@ -34,48 +40,52 @@ const DatePickerFormItem = () => {
           <Form.Item label="日期格式" name="format">
             <Input />
           </Form.Item>
-        </span>
+        </section>
 }
 
 const SwitchFormItem = () => {
-  return <span>
+  return <section>
           <Form.Item label="打开值" name="activeVal">
             <Input />
           </Form.Item>
           <Form.Item label="关闭值" name="inactiveVal">
             <Input />
           </Form.Item>
-        </span>
+        </section>
 }
 const UploadFormItem = () => {
-  return <span>
+  return <section>
           <Form.Item label="上传地址" name="action">
             <Input placeholder="请输入上传地址" />
           </Form.Item>
           <Form.Item label="提示" name="tip">
             <Input placeholder="请输入提示" />
           </Form.Item>
-        </span>
+        </section>
 }
 
 const CheckFormItem = ({ formModel }) => {
-  return <span>
-          <Form.Item label="选项">
-            <Table data={formModel.options}>
-              <Table.Column title="名称">
-                <Input v-model="scope.row.label" size="mini"></Input>
-              </Table.Column>
-              <Table.Column title="值" prop="value">
-                <Input v-model="scope.row.value" size="mini"></Input>
-              </Table.Column>
-              <Table.Column width="50"></Table.Column>
-            </Table>
-          </Form.Item>
-        </span>
-}
-
-const addIcon = (addRow) => {
-  return <PlusCircleOutlined onClick={() => addRow()}/>
+  const addRow = () => {
+    console.log(formModel);
+  }
+  const columns = [
+    {
+      title: '名称',
+      dataIndex: 'label'
+    },
+    {
+      title: '值',
+      dataIndex: 'value'
+    },
+    {
+      title: addIcon(addRow)
+    }
+  ]
+  return <section>
+            <Form.Item label="选项">
+              <Table columns={columns}></Table>
+            </Form.Item>
+         </section>
 }
 
 const SelectFormItem = ({ formModel }) => {
@@ -95,14 +105,14 @@ const SelectFormItem = ({ formModel }) => {
       title: addIcon(addRow)
     }
   ]
-  return <span>
+  return <section>
           <Form.Item label="占位文本" name="placeholder">
             <Input placeholder="请输入占位文本"></Input>
           </Form.Item>
           <Form.Item label="选项">
             <Table columns={columns}></Table>
           </Form.Item>
-        </span>
+        </section>
 }
 
 
@@ -142,30 +152,15 @@ class MainComponent extends React.Component {
       formItemType: '',
       formRules: {},
       activeItem: {}
-    }  
-
-    this.model = {
-      dragData: {},
-      dropData: {},
-      defaultConfig: {
-        'labelName': '',
-        'fontSize': 14,
-        'textAlign': 'center',
-        'bindCode': '',
-        'fontStyle': [],
-      },
-      column: [
-        {
-          render: function(){
-            return (
-              <span>
-                <i class="el-icon-circle-plus pointer" onClick={() => this.addOption()}></i>
-                <i class="el-icon-delete pointer" onClick={() => this.removeOption()}></i>
-              </span>
-            )
-          }
-        }
-      ],
+    }
+    this.dragData = {};
+    this.dropData = {};
+    this.defaultConfig = {
+      'labelName': '',
+      'fontSize': 14,
+      'textAlign': 'center',
+      'bindCode': '',
+      'fontStyle': [],
     }
     this.confFormRef = React.createRef();
   }
@@ -175,12 +170,12 @@ class MainComponent extends React.Component {
       const newState = store.getState();
       const { activeItem, dragData, dropData } = newState;
       if(activeItem !== this.props.activeItem) {
-        const config = activeItem.config || this.model.defaultConfig;
+        const config = activeItem.config || this.defaultConfig;
         this.setState({ confForm: config, formItemType: activeItem.type  });
         this.confFormRef.current.setFieldsValue(config);
       }
-      if(dragData !== this.model.dragData) this.model.dragData = newState.dragData;
-      if(dropData !== this.props.dropData) this.model.dropData = newState.dropData;
+      if(dragData !== this.dragData) this.dragData = newState.dragData;
+      if(dropData !== this.dropData) this.dropData = newState.dropData;
     })
   }
 
@@ -254,7 +249,7 @@ class MainComponent extends React.Component {
     const formItemConfig = {
       type: type,
       formItemId: this.randomId(),
-      config: Object.assign({}, this.model.defaultConfig, config)
+      config: Object.assign({}, this.defaultConfig, config)
     }
     this.setState({
       formItemConfig: formItemConfig,
@@ -282,13 +277,12 @@ class MainComponent extends React.Component {
   // 删除原先cell中的formItem
   removeOriFormItem() {
     const { mainData } = this.state;
-    const { dragData } = this.data;
     const oriCell = mainData.find(cell => {
-      return cell.cellId === dragData.pCellId;
+      return cell.cellId === this.dragData.pCellId;
     })
     if(!oriCell) return false;
     oriCell.children.forEach((formItem, index) => {
-      if(formItem.formItemId === dragData.formItemId) {
+      if(formItem.formItemId === this.dragData.formItemId) {
         oriCell.children.splice(index, 1);
       }
     })
@@ -302,14 +296,13 @@ class MainComponent extends React.Component {
 
   changeFormItemPos() {
     const { mainData } = this.state;
-    const { dragData, dropData } = this.data;
     const oriCell = mainData.find(cell => {
-      return cell.cellId === dragData.pCellId;
+      return cell.cellId === this.dragData.pCellId;
     })
     if(!oriCell) return false;
     const oriChildren = oriCell.children;
-    const dragIndex = oriChildren.indexOf(dragData);
-    const dropIndex = oriChildren.indexOf(dropData);
+    const dragIndex = oriChildren.indexOf(this.dragData);
+    const dropIndex = oriChildren.indexOf(this.dropData);
     if(dragIndex > -1 && dropIndex > -1) {
       [ oriChildren[dragIndex], oriChildren[dropIndex] ] = [ oriChildren[dropIndex], oriChildren[dragIndex] ]
     }
@@ -367,7 +360,7 @@ class MainComponent extends React.Component {
 
   addOption() {
     const { confForm } = this.state;
-    if(confForm.bindCode === '' || confForm.bindCode.length === 0) {
+    if(!confForm.bindCode.length) {
       message({ message: '请先填写字段名', type: 'warning' });
       return false;
     }
@@ -393,8 +386,8 @@ class MainComponent extends React.Component {
 
   msgChange() {
     const { formRules, confForm } = this.state;
-    const targetRule = Object.entries(formRules).find(rule => {
-      return rule[0] === confForm.bindCode;
+    const targetRule = Object.entries(formRules).find(([key]) => {
+      return key === confForm.bindCode;
     })
     // 修改非空提示信息
     if(!targetRule) return;

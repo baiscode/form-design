@@ -10,17 +10,20 @@ class CellComponent extends React.Component {
     super(props);
     this.props = props;
     this.state = {
+      initDrag: true,
       dragData: {}
     }
   }
 
   componentDidMount() {
     store.subscribe(() => {
-      const state = store.getState();
-      this.setState({
-        dragData: state.dragData,
-        initDrag: state.initDrag
-      })
+      const { initDrag, dragData } = store.getState();
+      if(initDrag !== this.state.initDrag) {
+        this.setState({ initDrag: initDrag });
+      }
+      if(dragData !== this.state.dragData) {
+        this.setState({ dragData: dragData });
+      }
     })
   }
 
@@ -42,7 +45,7 @@ class CellComponent extends React.Component {
   }
 
   formItemDrop(args) {
-    const dropItemData = args[0];
+    const [dropItemData] = args;
     const { cellData } = this.props;
     const { dragData } = this.state;
     if(dragData.pCellId !== cellData.cellId) return;
