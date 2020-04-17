@@ -18,8 +18,17 @@ const objCopy = function(target) {
   }
 }
 
-const addIcon = (addRow) => {
-  return <PlusCircleOutlined onClick={() => addRow()}/>
+const randomId = function(){
+  let randomId = '';
+  const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 'A', 'B', 'C', 'D', 'E', 'F'];
+  for (let i = 1; i <= 10; i++){
+    randomId += arr[Math.ceil(Math.random() * 15)] ;
+  }
+  return randomId;
+}
+
+const addIcon = (changeOption) => {
+  return <PlusCircleOutlined onClick={() => changeOption()}/>
 }
 
 const TextFormItem = () => {
@@ -76,40 +85,21 @@ const UploadFormItem = () => {
         </section>
 }
 
-const CheckFormItem = ({ formModel }) => {
-  const addRow = () => {
-    console.log(formModel);
-  }
-  const columns = [
-    {
-      title: '名称',
-      dataIndex: 'label'
-    },
-    {
-      title: '值',
-      dataIndex: 'value'
-    },
-    {
-      title: addIcon(addRow)
+const OptionTable = ({ modelOptions, setOptions }) => {
+  const [options, setState] = useState(modelOptions);
+  const changeOption = function(key, value, target) {
+    const opts = objCopy(options);
+    if(!key) {
+      opts.push({label: '', value: '', key: String(randomId())});
+    } else {
+      const targetOp = opts.find(item => {
+        return item.key === target;
+      })
+      if(!target) return;
+      targetOp[key] = value;
     }
-  ]
-  return <section>
-            <Form.Item label="选项">
-              <Table columns={columns}></Table>
-            </Form.Item>
-         </section>
-}
-
-
-const SelectFormItem = ({ formModel, addOption }) => {
-  const [options, setOptions] = useState([]);
-  const addRow = async function() {
-    await addOption();
-    const options = objCopy(formModel.options);
-    options.forEach((item, index) => {
-      item.key = String(index);
-    })
-    setOptions(options);
+    setState(opts);
+    setOptions(opts);
   }
 
   const columns = [
@@ -118,7 +108,7 @@ const SelectFormItem = ({ formModel, addOption }) => {
       dataIndex: 'label',
       key: 'label',
       render(text, record, index) {
-        return <Input defaultValue={text} size="mini"/>
+        return <Input defaultValue={text} size="mini" onChange={(e) => { changeOption('label', e.target.value, record.key )}} />
       }
     },
     {
@@ -126,28 +116,41 @@ const SelectFormItem = ({ formModel, addOption }) => {
       dataIndex: 'value',
       key: 'value',
       render(text, record, index) {
-        return <Input defaultValue={text} size="mini"/>
+        return <Input defaultValue={text} size="mini" onChange={(e) => { changeOption('value', e.target.value, record.key )}} />
       }
     },
     {
-      title: addIcon(addRow),
+      title: addIcon(changeOption),
       dataIndex: 'addBtn',
       key: 'addBtn'
     }
   ]
 
+  return <Table columns={columns} dataSource={options} pagination={false}></Table>
+}
+
+const CheckFormItem = ({ formModel, setOptions }) => {
+  return <section>
+            <Form.Item label="选项">
+              <OptionTable modelOptions={formModel.options} setOptions={setOptions}></OptionTable>
+            </Form.Item>
+         </section>
+}
+
+
+const SelectFormItem = ({ formModel, setOptions }) => {
   return <section>
           <Form.Item label="占位文本" name="placeholder">
             <Input placeholder="请输入占位文本"></Input>
           </Form.Item>
           <Form.Item label="选项">
-            <Table columns={columns} dataSource={options} pagination={false}></Table>
+            <OptionTable modelOptions={formModel.options} setOptions={setOptions}></OptionTable>
           </Form.Item>
         </section>
 }
 
 
-const FormItem = ({ formItemType, formModel, addOption }) => {
+const FormItem = ({ formItemType, formModel, setOptions }) => {
   switch (formItemType) {
     case 'TEXT':
     case 'TEXTAREA':
@@ -162,9 +165,9 @@ const FormItem = ({ formItemType, formModel, addOption }) => {
       return  <UploadFormItem formModel={formModel}></UploadFormItem>
     case 'CHECKBOX':
     case 'RADIO':
-      return  <CheckFormItem formModel={formModel} addOption={addOption}></CheckFormItem>
+      return  <CheckFormItem formModel={formModel} setOptions={setOptions}></CheckFormItem>
     case 'SELECT':
-      return <SelectFormItem formModel={formModel} addOption={addOption}></SelectFormItem>
+      return <SelectFormItem formModel={formModel} setOptions={setOptions}></SelectFormItem>
     default:
       return null
   }
@@ -209,20 +212,11 @@ class MainComponent extends React.Component {
       if(dropData !== this.dropData) this.dropData = newState.dropData;
     })
   }
-
-  randomId(){
-    let randomId = '';
-    const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 'A', 'B', 'C', 'D', 'E', 'F'];
-    for (let i = 1; i <= 10; i++){
-      randomId += arr[Math.ceil(Math.random() * 15)] ;
-    }
-    return randomId;
-  }
     
   formItemDrag(type) {
     this.setState({ dragType: 'formItem' });
     const config = {
-      bindCode: 'name_' + this.randomId(),
+      bindCode: 'name_' + randomId(),
       isRequired: true,
       message: ''
     }
@@ -242,12 +236,9 @@ class MainComponent extends React.Component {
         config.placeholder = '';
         break;
       case 'RADIO': 
-        config.options = [];
-        config.labelName = '单选框';
-        break;
       case 'CHECKBOX': 
         config.options = [];
-        config.labelName = '多选框';
+        config.labelName = '单选框';
         break;
       case 'TEXTAREA': 
         config.maxLength = 100;
@@ -279,7 +270,7 @@ class MainComponent extends React.Component {
     }
     const formItemConfig = {
       type: type,
-      formItemId: this.randomId(),
+      formItemId: randomId(),
       config: Object.assign({}, this.defaultConfig, config)
     }
     this.setState({
@@ -287,12 +278,11 @@ class MainComponent extends React.Component {
       formRules: Object.assign({}, this.state.formRules, rule)
     })
     this.props.changeDragData(formItemConfig);
-    // this.props.changeFormItemData(formItemConfig);
     this.props.changeInit(true);
   }
 
   mainDrop() {
-    const cellId = this.randomId();
+    const cellId = randomId();
     const mainData = this.state.mainData;
     mainData.push({
       cellId: cellId,
@@ -389,13 +379,13 @@ class MainComponent extends React.Component {
     this.setState({ confForm: confForm });
   }
 
-  addOption() {
+  setOptions([options]) {
     const { confForm } = this.state;
     if(!confForm.bindCode.length) {
       message({ message: '请先填写字段名', type: 'warning' });
       return false;
     }
-    confForm.options.push({ label: '', value: '' });
+    confForm.options = options;
     this.setState({ confForm: confForm });
   }
 
@@ -509,7 +499,7 @@ class MainComponent extends React.Component {
               <FormItem 
                 formItemType={state.formItemType} 
                 formModel={state.confForm}
-                addOption={() => this.addOption()}
+                setOptions={(...args) => this.setOptions(args)}
               ></FormItem>
 
               <Form.Item label="是否必填" name="isRequired" shouldUpdate>
@@ -546,12 +536,6 @@ const mapDispathToProps = function(dispatch) {
         payload: formItemConfig
       })
     },
-    // changeFormItemData(formItemData) {
-    //   dispatch({
-    //     type: 'FORM_ITEM_DATA',
-    //     payload: formItemData
-    //   })
-    // },
     changeInit(initDrag) {
       dispatch({
         type: 'INIT_DRAG',
