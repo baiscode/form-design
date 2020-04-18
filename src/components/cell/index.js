@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import FormItem from '../formItem';
+import store from '../../store/store';
 import './index.css';
-import store from '../store/store';
+import FormItem from '../formItem';
 
 class CellComponent extends React.Component {
   constructor(props) {
@@ -16,7 +16,7 @@ class CellComponent extends React.Component {
   }
 
   componentDidMount() {
-    store.subscribe(() => {
+    this.unsubscribe = store.subscribe(() => {
       const { initDrag, dragData } = store.getState();
       if(initDrag !== this.state.initDrag) {
         this.setState({ initDrag: initDrag });
@@ -25,6 +25,10 @@ class CellComponent extends React.Component {
         this.setState({ dragData: dragData });
       }
     })
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe();
   }
 
   cellDragOver(e) {
@@ -44,8 +48,7 @@ class CellComponent extends React.Component {
     if(dragData.pCellId !== cellData.cellId) this.props.removeOriFormItem();
   }
 
-  formItemDrop(args) {
-    const [dropItemData] = args;
+  formItemDrop([dropItemData]) {
     const { cellData } = this.props;
     const { dragData } = this.state;
     if(dragData.pCellId !== cellData.cellId) return;
@@ -54,14 +57,15 @@ class CellComponent extends React.Component {
   }
 
   // 删除formItem方法
-  removeFormItem(formItem) {
-    const cellChildren = this.cellData.children;
+  removeFormItem([formItem]) {
+    const { cellData } = this.props;
+    const cellChildren = cellData.children;
     const itemIndex = cellChildren.indexOf(formItem);
     if(itemIndex > -1) {
       cellChildren.splice(itemIndex, 1);
     }
-    if(this.cellData.children.length === 0) {
-      this.props.removeCell(this.cellData);
+    if(cellData.children.length === 0) {
+      this.props.removeCell(cellData);
     }
   }
 
@@ -74,10 +78,9 @@ class CellComponent extends React.Component {
           {children.map(formItem => {
             return <FormItem 
               key={formItem.formItemId} 
-              formItemConfig={formItem}
-              formModel={this.props.formModel}
+              formItem={formItem}
               formItemDrop={(...args) => this.formItemDrop(args)}
-              remove={() => this.removeFormItem()}
+              remove={(...args) => this.removeFormItem(args)}
             ></FormItem>
             })
           }
@@ -88,7 +91,6 @@ class CellComponent extends React.Component {
 
 CellComponent.propTypes = {
   cellData: PropTypes.object.isRequired,
-  formModel: PropTypes.object.isRequired,
   removeCell: PropTypes.func.isRequired,
   changeFormItemPos: PropTypes.func.isRequired,
   removeOriFormItem: PropTypes.func.isRequired
@@ -96,7 +98,6 @@ CellComponent.propTypes = {
 
 const mapStateToProps = function(state) {
   return {
-    formItemData: state.formItemData,
     initDrag: state.initDrag,
     dragData: state.dragData
   }
