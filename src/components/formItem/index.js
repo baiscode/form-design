@@ -6,6 +6,7 @@ import './index.css';
 import { Form, Input, InputNumber, Checkbox, Radio, Select, TimePicker, Switch, DatePicker, Upload } from 'antd';
 import { DeleteTwoTone  } from '@ant-design/icons';
 import store from '../../store/store';
+import { setActiveData, setInitDrag, setDragData } from '../../store/actionTypes';
 
 class FormItemComponent extends React.Component {
   constructor(props) {
@@ -161,22 +162,13 @@ const mapStateToProps = function(state) {
 const mapDispatchToProps = function(dispatch) {
   return {
     changeActiveItem(activeItem) {
-      dispatch({
-        type: 'SET_ACTIVE_FORMITEM',
-        payload: activeItem
-      })
+      dispatch(setActiveData(activeItem))
     },
     changeDragData(formItem) {
-      dispatch({
-        type: 'DRAG_FORMITEM_DATA',
-        payload: formItem
-      })
+      dispatch(setDragData(formItem))
     },
     changeInit(initDrag) {
-      dispatch({
-        type: 'INIT_DRAG',
-        payload: initDrag
-      })
+      dispatch(setInitDrag(initDrag))
     },
   }
 }

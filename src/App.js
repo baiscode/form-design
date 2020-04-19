@@ -6,6 +6,7 @@ import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } fro
 import { PlusCircleOutlined } from '@ant-design/icons';
 import store from './store/store';
 import Cell from './components/cell';
+import { setActiveData, setInitDrag, setDragData } from './store/actionTypes'
 
 const objCopy = function(target) {
   if(typeof target === 'object') {
@@ -540,22 +541,13 @@ const mapStateToProps = function(state) {
 const mapDispathToProps = function(dispatch) {
   return {
     changeDragData(formItemConfig) {
-      dispatch({
-        type: 'DRAG_FORMITEM_DATA',
-        payload: formItemConfig
-      })
+      dispatch(setDragData(formItemConfig));
     },
     changeInit(initDrag) {
-      dispatch({
-        type: 'INIT_DRAG',
-        payload: initDrag
-      })
+      dispatch(setInitDrag(initDrag));
     },
     changeActiveItem(activeItem) {
-      dispatch({
-        type: 'SET_ACTIVE_FORMITEM',
-        payload: activeItem
-      })
+      dispatch(setActiveData(activeItem));
     }
   }
 }

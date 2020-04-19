@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import store from '../../store/store';
 import './index.css';
 import FormItem from '../formItem';
+import { setDropData } from '../../store/actionTypes';
 
 class CellComponent extends React.Component {
   constructor(props) {
@@ -104,11 +105,8 @@ const mapStateToProps = function(state) {
 }
 const mapDispatchToProps = (dispatch) => {
   return {
-    changeDropFormData(payload) {
-      dispatch({
-        type: 'DROP_FORMITEM_DATA',
-        payload: payload
-      })
+    changeDropFormData(dropData) {
+      dispatch(setDropData(dropData))
     }
   }
 }
