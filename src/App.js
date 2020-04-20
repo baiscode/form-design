@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import './index.css';
 import { connect } from 'react-redux';
 import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } from 'antd';
-import { PlusCircleOutlined } from '@ant-design/icons';
+import { PlusCircleOutlined, DeleteTwoTone } from '@ant-design/icons';
 import store from './store/store';
 import Cell from './components/cell';
 import { setActiveData, setInitDrag, setDragData } from './store/actionTypes'
@@ -27,6 +27,16 @@ const randomId = function(){
     randomId += arr[Math.ceil(Math.random() * 15)] ;
   }
   return randomId;
+}
+
+const debounce = function(fn, wait = 1000) {
+  let timer = null;
+  return function(...args) {
+    if(timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.call(this, ...args)
+    }, wait);
+  }
 }
 
 const addIcon = (changeOption) => {
@@ -104,6 +114,14 @@ const OptionTable = ({ modelOptions, setOptions }) => {
     setOptions(opts);
   }
 
+  const deleteOption = function(key){
+    const opts = options.filter(opt => {
+      return opt.key !== key;
+    })
+    setState(opts);
+    setOptions(opts);
+  }
+
   const columns = [
     {
       title: '名称',
@@ -117,14 +135,17 @@ const OptionTable = ({ modelOptions, setOptions }) => {
       title: '值',
       dataIndex: 'value',
       key: 'value',
-      render(text, record, index) {
+      render(text, record) {
         return <Input defaultValue={text} size="mini" onChange={(e) => { changeOption('value', e.target.value, record.key )}} />
       }
     },
     {
       title: addIcon(changeOption),
       dataIndex: 'addBtn',
-      key: 'addBtn'
+      key: 'addBtn',
+      render(text, record) {
+        return <DeleteTwoTone twoToneColor="#DC143C" onClick={(e) => { deleteOption(record.key) }} />
+      }
     }
   ]
 
@@ -178,6 +199,16 @@ class AppComponent extends React.Component {
     this.confFormRef = React.createRef();
     this.mainForm = React.createRef();
     this.cacheCode = '';
+    this.changeBindCode = debounce(() => {
+      if(this.cacheCode in this.formModel) {
+        delete this.formModel[this.cacheCode];
+      }
+      if(this.cacheCode in this.formRules) {
+        delete this.formRules[this.cacheCode];
+      }
+      this.setFormKey(false);
+      this.setRules(false);
+    })
   }
 
   componentDidMount() {
@@ -186,7 +217,7 @@ class AppComponent extends React.Component {
       const { activeItem, dragData, dropData } = newState;
       if(activeItem !== this.props.activeItem) {
         const config = activeItem.config || this.defaultConfig;
-        this.setState({ confForm: config, formItemType: activeItem.type  });
+        this.setState({ confForm: config, formItemType: activeItem.type, activeItem: activeItem  });
         this.confFormRef.current.setFieldsValue(config);
       }
       if(dragData !== this.dragData) this.dragData = newState.dragData;
@@ -198,7 +229,6 @@ class AppComponent extends React.Component {
     store.subscribe(() => {});
   }
 
-    
   formItemDrag(type) {
     this.dragType = type;
     const config = {
@@ -274,7 +304,8 @@ class AppComponent extends React.Component {
       children: [Object.assign({}, this.state.formItemConfig, { pCellId: cellId })]
     })
     this.setState({ mainData: mainData })
-    this.setFormKey();
+    this.setFormKey(true);
+    this.setRules(true);
   }
 
   mainDragOver(e) {
@@ -314,6 +345,78 @@ class AppComponent extends React.Component {
     [ oriChildren[dragIndex], oriChildren[dropIndex] ] = [ oriChildren[dropIndex], oriChildren[dragIndex] ]
   }
 
+  removeCell(cell) {
+    const mainData = this.state.mainData;
+    const cellIndex = mainData.indexOf(cell);
+    mainData.splice(cellIndex, 1)
+    this.setState({ mainData: mainData });
+  }
+
+  clearActive() {
+    this.props.changeActiveItem({});
+  }
+
+  confFormChange(changeVal) {
+    const key = Object.keys(changeVal)[0];
+    const confForm = this.state.confForm;
+    if(!(key in confForm)) return;
+    confForm[key] = changeVal[key];
+    this.setState({ confForm: confForm });
+    if(key === 'bindCode') {
+      this.changeBindCode();
+    }
+  }
+
+  mainFormChange(changeVal) {
+    const key = Object.keys(changeVal)[0];
+    if(!(key in this.formModel)) return;
+    this.formModel[key] = changeVal[key];
+  }
+
+  cacheBindCode() {
+    const { confForm } = this.state;
+    this.cacheCode = confForm.bindCode;
+  }
+
+  // 设置formModel
+  setFormKey(isInit) {
+    const { formItemConfig, confForm, activeItem } = this.state;
+    const bindCode = isInit ? formItemConfig.config.bindCode : confForm.bindCode;
+    if(!bindCode) {
+      message.warning('请填写字段名', 1500, () => {
+        confForm.bindCode = this.cacheCode;
+        formItemConfig.config.bindCode = this.cacheCode;
+        this.setState({ confForm: confForm, formItemConfig: formItemConfig });
+      });
+      return;
+    }
+    let defaultVal;
+    switch(activeItem.type) {
+      case 'NUMBER': defaultVal = 0; break;
+      case 'SWITCH':  defaultVal = 1; break;
+      case 'CHECKBOX': defaultVal = []; break;
+      case 'UPLOAD': defaultVal = []; break;
+      default: defaultVal = '';
+    }
+    this.formModel[bindCode] = defaultVal;
+  }
+
+  setOptions([options]) {
+    const { confForm } = this.state;
+    if(!confForm.bindCode.length) {
+      message.warn('请先填写字段名');
+      return false;
+    }
+    confForm.options = options;
+    this.setState({ confForm: confForm });
+  }
+
+  removeOption(row) {
+    const { confForm } = this.state;
+    const optionIndex = confForm.options.indexOf(row);
+    if(optionIndex > -1) confForm.options.splice(optionIndex, 1);
+  }
+
   requireChange(value) {
     const { activeItem } = this.state;
     const config = activeItem.config;
@@ -327,90 +430,19 @@ class AppComponent extends React.Component {
     }
   }
 
-  cacheBindCode() {
-    const { confForm } = this.state;
-    this.cacheCode = confForm.bindCode;
-  }
-
-  changeBindCode() {
-    if(this.cacheCode in this.formModel) {
-      delete this.formModel[this.cacheCode];
-    }
-    this.setFormKey();
-  }
-
-  // 设置formModel
-  setFormKey() {
-    const { formItemConfig } = this.state;
-    if(!formItemConfig) return;
-    const config = formItemConfig.config;
-    if(!config.bindCode) {
-      message({ message: '请填写字段名', type: 'warning' });
+  setRules(isInit) {
+    const { formItemConfig, confForm } = this.state;
+    const bindCode = isInit ? formItemConfig.config.bindCode : confForm.bindCode;
+    // 修改非空提示信息
+    if(!(bindCode in this.formRules)) {
+      this.formRules[bindCode] = { required: true, message: confForm.message || '' };
       return;
     }
-    let defaultVal;
-    switch(this.dragType) {
-      case 'NUMBER': defaultVal = 0; break;
-      case 'SWITCH':  defaultVal = 1; break;
-      case 'CHECKBOX': defaultVal = []; break;
-      case 'UPLOAD': defaultVal = []; break;
-      default: defaultVal = '';
-    }
-    this.formModel[config.bindCode] = defaultVal;
-  }
-
-  confFormChange(changeVal) {
-    const key = Object.keys(changeVal)[0];
-    const confForm = this.state.confForm;
-    if(!(key in confForm)) return;
-    confForm[key] = changeVal[key];
-    this.setState({ confForm: confForm });
-  }
-
-  mainFormChange(changeVal) {
-    const key = Object.keys(changeVal)[0];
-    if(!(key in this.formModel)) return;
-    this.formModel[key] = changeVal[key];
-  }
-
-  setOptions([options]) {
-    const { confForm } = this.state;
-    if(!confForm.bindCode.length) {
-      message({ message: '请先填写字段名', type: 'warning' });
-      return false;
-    }
-    confForm.options = options;
-    this.setState({ confForm: confForm });
-  }
-
-  removeOption(row) {
-    const { confForm } = this.state;
-    const optionIndex = confForm.options.indexOf(row);
-    if(optionIndex > -1) confForm.options.splice(optionIndex, 1);
-  }
-
-  removeCell(cell) {
-    const mainData = this.state.mainData;
-    const cellIndex = mainData.indexOf(cell);
-    mainData.splice(cellIndex, 1)
-    this.setState({ mainData: mainData });
-  }
-
-  clearActive() {
-    this.props.changeActiveItem({});
-  }
-
-  msgChange() {
-    const { confForm } = this.state;
-    const targetRule = Object.entries(this.formRules).find(([key]) => {
-      return key === confForm.bindCode;
-    })
-    // 修改非空提示信息
-    if(!targetRule) return;
-    this.formRules[targetRule[0]].message = confForm.message;
+    this.formRules[bindCode].message = confForm.message;
   }
 
   getFormData() {
+    console.log(this.formRules);
     return {
       formModel: this.formModel,
       formRules: this.formRules
@@ -448,6 +480,7 @@ class AppComponent extends React.Component {
               )
             })
           }
+          <button onClick={() => this.getFormData()}>获取表单数据</button>
         </div>
         <div className="layout-center">
           <div className="form-container" onDragOver={(e) => this.mainDragOver(e) } onDrop={() => this.mainDrop()} onClick={() => this.clearActive()}>
@@ -459,7 +492,8 @@ class AppComponent extends React.Component {
                           cellData={cellData}
                           removeOriFormItem={() => this.removeOriFormItem() }
                           changeFormItemPos={() => this.changeFormItemPos() }
-                          removeCell={this.removeCell.bind(this)}
+                          removeCell={() => this.removeCel()}
+                          setFormKey={(...args) => this.setFormKey(args[0])}
                         ></Cell>
                 })
               }
@@ -470,7 +504,7 @@ class AppComponent extends React.Component {
           <div className="conf-form">
             <Form name="confForm" ref={this.confFormRef} onValuesChange={(changeVal, allVal) => this.confFormChange(changeVal, allVal)}>
               <Form.Item label="字段名" name="bindCode">
-                <Input placeholder="请输入字段名" onFocus={() => this.cacheBindCode()} onBlur={(e) => this.changeBindCode(e.target.value)} />
+                <Input placeholder="请输入字段名" onFocus={() => this.cacheBindCode()} />
               </Form.Item>
               <Form.Item label="标签名" name="labelName">
                 <Input placeholder="请输入标签名" />
@@ -518,7 +552,7 @@ class AppComponent extends React.Component {
               {
                 state.confForm.isRequired ? 
                   <Form.Item label="非空提示" name="message" shouldUpdate>
-                    <Input placeholder="请输入字段为空时的提示" onBlur={() => this.msgChange()} />
+                    <Input placeholder="请输入字段为空时的提示" />
                   </Form.Item> : null
               }
               
