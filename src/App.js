@@ -199,7 +199,7 @@ class AppComponent extends React.Component {
     this.confFormRef = React.createRef();
     this.mainForm = React.createRef();
     this.cacheCode = '';
-    this.changeBindCode = debounce(() => {
+    this.changeModelKey = debounce(() => {
       if(this.cacheCode in this.formModel) {
         delete this.formModel[this.cacheCode];
       }
@@ -207,6 +207,9 @@ class AppComponent extends React.Component {
         delete this.formRules[this.cacheCode];
       }
       this.setFormKey(false);
+      this.setRules(false);
+    })
+    this.changeRule = debounce(() => {
       this.setRules(false);
     })
   }
@@ -285,14 +288,14 @@ class AppComponent extends React.Component {
     const rule = {
       [config.bindCode]: { required: true, message: config.message }
     }
-    const formItemConfig = {
+    const formItemData = {
       type: type,
       formItemId: randomId(),
       config: Object.assign({}, this.defaultConfig, config)
     }
-    this.setState({ formItemConfig: formItemConfig });
+    this.setState({ formItemData: formItemData });
     this.formRules = Object.assign({}, this.formRules, rule)
-    this.props.changeDragData(formItemConfig);
+    this.props.changeDragData(formItemData);
     this.props.changeInit(true);
   }
 
@@ -301,7 +304,7 @@ class AppComponent extends React.Component {
     const mainData = this.state.mainData;
     mainData.push({
       cellId: cellId,
-      children: [Object.assign({}, this.state.formItemConfig, { pCellId: cellId })]
+      children: [Object.assign({}, this.state.formItemData, { pCellId: cellId })]
     })
     this.setState({ mainData: mainData })
     this.setFormKey(true);
@@ -362,9 +365,9 @@ class AppComponent extends React.Component {
     if(!(key in confForm)) return;
     confForm[key] = changeVal[key];
     this.setState({ confForm: confForm });
-    if(key === 'bindCode') {
-      this.changeBindCode();
-    }
+    if(key === 'bindCode') this.changeModelKey();
+    if(key === 'message') this.changeRule();
+    if(key === 'isRequired') this.changeRequire(changeVal[key]);
   }
 
   mainFormChange(changeVal) {
@@ -380,13 +383,13 @@ class AppComponent extends React.Component {
 
   // 设置formModel
   setFormKey(isInit) {
-    const { formItemConfig, confForm, activeItem } = this.state;
-    const bindCode = isInit ? formItemConfig.config.bindCode : confForm.bindCode;
-    if(!bindCode) {
-      message.warning('请填写字段名', 1500, () => {
+    const { formItemData, confForm, activeItem } = this.state;
+    const bindCode = isInit ? formItemData.config.bindCode : confForm.bindCode;
+    if(!bindCode || bindCode in this.formModel) {
+      message.warning(!bindCode ? '请填写字段名' : '字段名重复', 1, () => {
         confForm.bindCode = this.cacheCode;
-        formItemConfig.config.bindCode = this.cacheCode;
-        this.setState({ confForm: confForm, formItemConfig: formItemConfig });
+        formItemData.config.bindCode = this.cacheCode;
+        this.setState({ confForm: confForm, formItemData: formItemData });
       });
       return;
     }
@@ -417,28 +420,25 @@ class AppComponent extends React.Component {
     if(optionIndex > -1) confForm.options.splice(optionIndex, 1);
   }
 
-  requireChange(value) {
-    const { activeItem } = this.state;
-    const config = activeItem.config;
-    if(value) {
-      const rule = {
-        [config.bindCode]: { required: true, message: config.message }
-      }
-      this.formRules = Object.assign({}, this.formRules, rule);
+  changeRequire(value) {
+    const { bindCode, message } = this.state.confForm;
+    if(!!value) {
+      this.formRules[bindCode] = [{ required: true, message: message }];
     }else {
-      delete this.formRules[config.bindCode];
+      delete this.formRules[bindCode];
     }
   }
 
   setRules(isInit) {
-    const { formItemConfig, confForm } = this.state;
-    const bindCode = isInit ? formItemConfig.config.bindCode : confForm.bindCode;
+    const { formItemData, confForm } = this.state;
+    const config = isInit ? formItemData.config : confForm;
+    const { bindCode, message } = config;
     // 修改非空提示信息
     if(!(bindCode in this.formRules)) {
-      this.formRules[bindCode] = { required: true, message: confForm.message || '' };
+      this.formRules[bindCode] = { required: true, message: message || '' };
       return;
     }
-    this.formRules[bindCode].message = confForm.message;
+    this.formRules[bindCode].message = message;
   }
 
   getFormData() {
@@ -547,7 +547,7 @@ class AppComponent extends React.Component {
               )()}
 
               <Form.Item label="是否必填" name="isRequired" shouldUpdate>
-                <Switch checked={state.confForm.isRequired} onChange={() => this.requireChange()}></Switch>
+                <Switch checked={state.confForm.isRequired}></Switch>
               </Form.Item>
               {
                 state.confForm.isRequired ? 
@@ -574,8 +574,8 @@ const mapStateToProps = function(state) {
 
 const mapDispathToProps = function(dispatch) {
   return {
-    changeDragData(formItemConfig) {
-      dispatch(setDragData(formItemConfig));
+    changeDragData(formItemData) {
+      dispatch(setDragData(formItemData));
     },
     changeInit(initDrag) {
       dispatch(setInitDrag(initDrag));
