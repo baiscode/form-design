@@ -198,7 +198,10 @@ class AppComponent extends React.Component {
     store.subscribe(() => {});
   }
 
-    
+  /**
+   * 左侧列表拖拽开始事件
+   * @param {*} type 拖拽的类别
+   */
   formItemDrag(type) {
     this.dragType = type;
     const config = {
@@ -266,6 +269,9 @@ class AppComponent extends React.Component {
     this.props.changeInit(true);
   }
 
+  /**
+   * 表单区域drop事件
+   */
   mainDrop() {
     const cellId = randomId();
     const mainData = this.state.mainData;
@@ -280,8 +286,10 @@ class AppComponent extends React.Component {
   mainDragOver(e) {
     e.preventDefault();
   }
-
-  // 删除原先cell中的formItem
+  
+  /**
+   * 删除原先行中的表单元素
+   */
   removeOriFormItem() {
     const { mainData } = this.state;
     const oriCell = mainData.find(cell => {
@@ -301,6 +309,9 @@ class AppComponent extends React.Component {
     }
   }
 
+  /**
+   * 相同行中的表单元素互换位置
+   */
   changeFormItemPos() {
     const { mainData } = this.state;
     const oriCell = mainData.find(cell => {
@@ -327,6 +338,9 @@ class AppComponent extends React.Component {
     }
   }
 
+  /**
+   * 缓存表单组件的bindCode
+   */
   cacheBindCode() {
     const { confForm } = this.state;
     this.cacheCode = confForm.bindCode;
@@ -339,7 +353,9 @@ class AppComponent extends React.Component {
     this.setFormKey();
   }
 
-  // 设置formModel
+  /**
+   * 设置formModel
+   */
   setFormKey() {
     const { formItemConfig } = this.state;
     if(!formItemConfig) return;
@@ -359,6 +375,10 @@ class AppComponent extends React.Component {
     this.formModel[config.bindCode] = defaultVal;
   }
 
+  /**
+   * 配置表单值改变
+   * @param {object} changeVal 
+   */
   confFormChange(changeVal) {
     const key = Object.keys(changeVal)[0];
     const confForm = this.state.confForm;
@@ -367,12 +387,20 @@ class AppComponent extends React.Component {
     this.setState({ confForm: confForm });
   }
 
+  /**
+   * 主表单值改变
+   * @param {object}} changeVal 
+   */
   mainFormChange(changeVal) {
     const key = Object.keys(changeVal)[0];
     if(!(key in this.formModel)) return;
     this.formModel[key] = changeVal[key];
   }
 
+  /**
+   * 设置下拉/单选/多选的options
+   * @param {object} param0 
+   */
   setOptions([options]) {
     const { confForm } = this.state;
     if(!confForm.bindCode.length) {
@@ -383,12 +411,20 @@ class AppComponent extends React.Component {
     this.setState({ confForm: confForm });
   }
 
-  removeOption(row) {
+  /**
+   * 删除option
+   * @param {object} option 
+   */
+  removeOption(option) {
     const { confForm } = this.state;
-    const optionIndex = confForm.options.indexOf(row);
+    const optionIndex = confForm.options.indexOf(option);
     if(optionIndex > -1) confForm.options.splice(optionIndex, 1);
   }
 
+  /**
+   * 删除行
+   * @param {object}} cell 
+   */
   removeCell(cell) {
     const mainData = this.state.mainData;
     const cellIndex = mainData.indexOf(cell);
@@ -396,6 +432,9 @@ class AppComponent extends React.Component {
     this.setState({ mainData: mainData });
   }
 
+  /**
+   * 清除所有表单元素的active状态
+   */
   clearActive() {
     this.props.changeActiveItem({});
   }
