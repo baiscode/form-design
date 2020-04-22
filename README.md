@@ -1,1 +1,1 @@
-功能与vue-form-design相同，采用react和antd开发
+表单设计 使用react和abtd开发
