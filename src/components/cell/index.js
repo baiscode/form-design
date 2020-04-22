@@ -38,13 +38,14 @@ class CellComponent extends React.Component {
 
   cellDrop(e) {
     e.stopPropagation();
-    const { cellData } = this.props;
+    const { cellData, setFormKey } = this.props;
     const { initDrag, dragData } = this.state;
     
     const data = Object.assign({}, dragData, { pCellId: cellData.cellId });
     if(initDrag || dragData.pCellId !== cellData.cellId) {
       cellData.children.push(data);
       this.setState({ cellData: cellData });
+      setFormKey(true);
     }
     if(dragData.pCellId !== cellData.cellId) this.props.removeOriFormItem();
   }
@@ -94,7 +95,8 @@ CellComponent.propTypes = {
   cellData: PropTypes.object.isRequired,
   removeCell: PropTypes.func.isRequired,
   changeFormItemPos: PropTypes.func.isRequired,
-  removeOriFormItem: PropTypes.func.isRequired
+  removeOriFormItem: PropTypes.func.isRequired,
+  setFormKey: PropTypes.func.isRequired
 }
 
 const mapStateToProps = function(state) {

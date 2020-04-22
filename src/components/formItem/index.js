@@ -139,7 +139,7 @@ class FormItemComponent extends React.Component {
               })()}
             </Form.Item>
             <i className="remove-icon" hidden={formItem.formItemId !== activeItem.formItemId}>
-              <DeleteTwoTone  twoToneColor="#DC143C" onClick={() => this.removeFormItem()}/>
+              <DeleteTwoTone twoToneColor="#DC143C" onClick={() => this.removeFormItem()}/>
             </i>
           </div>
       </div>
