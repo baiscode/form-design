@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import './index.css';
-import { Form, Input, InputNumber, Checkbox, Radio, Select, TimePicker, Switch, DatePicker, Upload } from 'antd';
+import { Form, Input, InputNumber, Checkbox, Radio, Select, TimePicker, Switch, DatePicker, Upload, Button } from 'antd';
 import { DeleteTwoTone  } from '@ant-design/icons';
 import store from '../../store/store';
 import { setActiveData, setInitDrag, setDragData } from '../../store/actionTypes';
@@ -16,7 +16,6 @@ class FormItemComponent extends React.Component {
     const { fontSize, textAlign, fontStyle } = formItem.config
     this.state = {
       boxWidth: '',
-      bindCode: formItem.config.bindCode,
       activeItem: this.props.activeItem,
       formLabelStyle:  {
         textAlign: textAlign,
@@ -95,13 +94,13 @@ class FormItemComponent extends React.Component {
 
   render() {
     const { formItem } = this.props;
-    const { activeItem, boxWidth, bindCode, formLabelStyle } = this.state;
+    const { activeItem, boxWidth, formLabelStyle } = this.state;
     const config = formItem.config;
     return (
       <div className={`form-item ${formItem.formItemId === activeItem.formItemId ? 'active' : ''}`} draggable onDragStart={() => this.formItemDrag()} onClick={(e) => this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
           <label className={`form-item-label ${formItem.config.isRequired ? 'required': ''}`} style={formLabelStyle} ref={this.labelRef}>{formItem.config.labelName || ''}</label>
           <div className="form-item-box" style={{ width: boxWidth }}>
-            <Form.Item name={bindCode}>
+            <Form.Item name={config.bindCode} rules={[{ required: config.isRequired, message: config.message }]}>
               {(() => {
                 switch(formItem.type) {
                   case 'TEXT':
@@ -111,7 +110,7 @@ class FormItemComponent extends React.Component {
                   case 'TEXTAREA':
                     return <Input.TextArea placeholder={config.placeholder} />
                   case 'SELECT':
-                    return  <Select style={{ width: 150 }}>
+                    return  <Select style={{ width: 150 }} placeholder={config.placeholder}>
                               {config.options.map(option => {
                                 return <Select.Option value={option.value} key={option.value}>{option.label}</Select.Option>
                               })}
@@ -132,7 +131,11 @@ class FormItemComponent extends React.Component {
                   case 'SWITCH': 
                     return <Switch onClick={(checked, e) => e.stopPropagation(e)} />
                   case 'UPLOAD':
-                    return <Upload action={config.action}/>
+                    return <Upload action={config.action} fileList={[]}>
+                      <Button>
+                        点击上传
+                      </Button>
+                    </Upload>
                   default:
                     return null;
                 }

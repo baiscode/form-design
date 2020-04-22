@@ -25,7 +25,16 @@
 }
 .form-container{
   height: 500px;
+  position: relative;
 }
 .pointer{
   cursor: pointer;
+}
+.submit-btn {
+  margin-top: 10px;
+  position: absolute !important;
+  bottom: 0;
+}
+.hidden {
+  display: none;
 }

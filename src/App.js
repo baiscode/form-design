@@ -2,7 +2,7 @@ import './App.css';
 import React, { useState } from 'react';
 import './index.css';
 import { connect } from 'react-redux';
-import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } from 'antd';
+import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, Button, message } from 'antd';
 import { PlusCircleOutlined, DeleteTwoTone } from '@ant-design/icons';
 import store from './store/store';
 import Cell from './components/cell';
@@ -27,16 +27,6 @@ const randomId = function(){
     randomId += arr[Math.ceil(Math.random() * 15)] ;
   }
   return randomId;
-}
-
-const debounce = function(fn, wait = 1000) {
-  let timer = null;
-  return function(...args) {
-    if(timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn.call(this, ...args)
-    }, wait);
-  }
 }
 
 const addIcon = (changeOption) => {
@@ -88,7 +78,7 @@ const SwitchItem = () => {
 }
 const UploadItem = () => {
   return <section>
-          <Form.Item label="上传地址" name="action">
+          <Form.Item label="上传地址" name="action" rules={[{ required: true, message: '上传地址不能为空'} ]}>
             <Input placeholder="请输入上传地址" />
           </Form.Item>
           <Form.Item label="提示" name="tip">
@@ -181,11 +171,10 @@ class AppComponent extends React.Component {
       mainData: [],
       cellConfig: null,
       confForm: {},
-      formItemType: '',
-      activeItem: {}
+      activeItem: {},
     }
+    this.formItemData = {};
     this.formModel = {};
-    this.formRules = {};
     this.dragData = {};
     this.dropData = {};
     this.dragType = '';
@@ -198,29 +187,15 @@ class AppComponent extends React.Component {
     }
     this.confFormRef = React.createRef();
     this.mainForm = React.createRef();
-    this.cacheCode = '';
-    this.changeModelKey = debounce(() => {
-      if(this.cacheCode in this.formModel) {
-        delete this.formModel[this.cacheCode];
-      }
-      if(this.cacheCode in this.formRules) {
-        delete this.formRules[this.cacheCode];
-      }
-      this.setFormKey(false);
-      this.setRules(false);
-    })
-    this.changeRule = debounce(() => {
-      this.setRules(false);
-    })
   }
 
   componentDidMount() {
-    store.subscribe(() => {
+    this.unsubscribe = store.subscribe(() => {
       const newState = store.getState();
       const { activeItem, dragData, dropData } = newState;
       if(activeItem !== this.props.activeItem) {
         const config = activeItem.config || this.defaultConfig;
-        this.setState({ confForm: config, formItemType: activeItem.type, activeItem: activeItem  });
+        this.setState({ confForm: config, activeItem: activeItem  });
         this.confFormRef.current.setFieldsValue(config);
       }
       if(dragData !== this.dragData) this.dragData = newState.dragData;
@@ -229,7 +204,7 @@ class AppComponent extends React.Component {
   }
 
   componentWillUnmount() {
-    store.subscribe(() => {});
+    this.unsubscribe();
   }
 
   /**
@@ -241,7 +216,6 @@ class AppComponent extends React.Component {
     const config = {
       bindCode: 'name_' + randomId(),
       isRequired: true,
-      message: ''
     }
     switch(type) {
       case 'TEXT': 
@@ -260,9 +234,12 @@ class AppComponent extends React.Component {
         config.placeholder = '';
         break;
       case 'RADIO': 
-      case 'CHECKBOX': 
         config.options = [];
         config.labelName = '单选框';
+        break;
+      case 'CHECKBOX': 
+        config.options = [];
+        config.labelName = '多选框';
         break;
       case 'TEXTAREA': 
         config.maxLength = 100;
@@ -271,10 +248,10 @@ class AppComponent extends React.Component {
         break;
       case 'DATEPICKER': 
         config.dateType = 'date';
-        config.labelName = '日期选择';
+        config.labelName = '日期';
         break;
       case 'TIMEPICKER':
-        config.labelName = '时间选择';
+        config.labelName = '时间';
         break;
       case 'SWITCH': 
         config.labelName = '开关';
@@ -283,23 +260,19 @@ class AppComponent extends React.Component {
         break;
       case 'UPLOAD':
         config.action = '';
-        config.labelName = '文件上传';
+        config.labelName = '文件';
         config.tip = '';
         break;
       default:
         break;
     };
-    const rule = {
-      [config.bindCode]: { required: true, message: config.message }
-    }
-    const formItemData = {
+    config.message = `${config.labelName}不能为空`;
+    this.formItemData = {
       type: type,
       formItemId: randomId(),
       config: Object.assign({}, this.defaultConfig, config)
     }
-    this.setState({ formItemData: formItemData });
-    this.formRules = Object.assign({}, this.formRules, rule)
-    this.props.changeDragData(formItemData);
+    this.props.changeDragData(this.formItemData);
     this.props.changeInit(true);
   }
 
@@ -311,11 +284,9 @@ class AppComponent extends React.Component {
     const mainData = this.state.mainData;
     mainData.push({
       cellId: cellId,
-      children: [Object.assign({}, this.state.formItemData, { pCellId: cellId })]
+      children: [Object.assign({}, this.formItemData, { pCellId: cellId })]
     })
     this.setState({ mainData: mainData })
-    this.setFormKey(true);
-    this.setRules(true);
   }
 
   mainDragOver(e) {
@@ -367,101 +338,12 @@ class AppComponent extends React.Component {
     this.setState({ mainData: mainData });
   }
 
-  clearActive() {
-    this.props.changeActiveItem({});
-  }
-
   confFormChange(changeVal) {
     const key = Object.keys(changeVal)[0];
     const confForm = this.state.confForm;
     if(!(key in confForm)) return;
     confForm[key] = changeVal[key];
     this.setState({ confForm: confForm });
-    if(key === 'bindCode') this.changeModelKey();
-    if(key === 'message') this.changeRule();
-    if(key === 'isRequired') this.changeRequire(changeVal[key]);
-  }
-
-  mainFormChange(changeVal) {
-    const key = Object.keys(changeVal)[0];
-    if(!(key in this.formModel)) return;
-    this.formModel[key] = changeVal[key];
-  }
-
-  /**
-   * 缓存表单组件的bindCode
-   */
-  cacheBindCode() {
-    const { confForm } = this.state;
-    this.cacheCode = confForm.bindCode;
-  }
-
-<<<<<<< HEAD
-  changeBindCode() {
-    if(this.cacheCode in this.formModel) {
-      delete this.formModel[this.cacheCode];
-    }
-    this.setFormKey();
-  }
-
-  /**
-   * 设置formModel
-   */
-  setFormKey() {
-    const { formItemConfig } = this.state;
-    if(!formItemConfig) return;
-    const config = formItemConfig.config;
-    if(!config.bindCode) {
-      message({ message: '请填写字段名', type: 'warning' });
-=======
-  // 设置formModel
-  setFormKey(isInit) {
-    const { formItemData, confForm, activeItem } = this.state;
-    const bindCode = isInit ? formItemData.config.bindCode : confForm.bindCode;
-    if(!bindCode || bindCode in this.formModel) {
-      message.warning(!bindCode ? '请填写字段名' : '字段名重复', 1, () => {
-        confForm.bindCode = this.cacheCode;
-        formItemData.config.bindCode = this.cacheCode;
-        this.setState({ confForm: confForm, formItemData: formItemData });
-      });
->>>>>>> 8fc96f02a52b52d94cb82584f5f6b970ef33ab34
-      return;
-    }
-    let defaultVal;
-    switch(activeItem.type) {
-      case 'NUMBER': defaultVal = 0; break;
-      case 'SWITCH':  defaultVal = 1; break;
-      case 'CHECKBOX': defaultVal = []; break;
-      case 'UPLOAD': defaultVal = []; break;
-      default: defaultVal = '';
-    }
-<<<<<<< HEAD
-    this.formModel[config.bindCode] = defaultVal;
-  }
-
-  /**
-   * 配置表单值改变
-   * @param {object} changeVal 
-   */
-  confFormChange(changeVal) {
-    const key = Object.keys(changeVal)[0];
-    const confForm = this.state.confForm;
-    if(!(key in confForm)) return;
-    confForm[key] = changeVal[key];
-    this.setState({ confForm: confForm });
-  }
-
-  /**
-   * 主表单值改变
-   * @param {object}} changeVal 
-   */
-  mainFormChange(changeVal) {
-    const key = Object.keys(changeVal)[0];
-    if(!(key in this.formModel)) return;
-    this.formModel[key] = changeVal[key];
-=======
-    this.formModel[bindCode] = defaultVal;
->>>>>>> 8fc96f02a52b52d94cb82584f5f6b970ef33ab34
   }
 
   /**
@@ -488,56 +370,16 @@ class AppComponent extends React.Component {
     if(optionIndex > -1) confForm.options.splice(optionIndex, 1);
   }
 
-<<<<<<< HEAD
-  /**
-   * 删除行
-   * @param {object}} cell 
-   */
-  removeCell(cell) {
-    const mainData = this.state.mainData;
-    const cellIndex = mainData.indexOf(cell);
-    mainData.splice(cellIndex, 1)
-    this.setState({ mainData: mainData });
+  formSubmit(fieldsValue) {
+    console.log(fieldsValue);
   }
 
-  /**
-   * 清除所有表单元素的active状态
-   */
-  clearActive() {
-    this.props.changeActiveItem({});
-=======
-  changeRequire(value) {
-    const { bindCode, message } = this.state.confForm;
-    if(!!value) {
-      this.formRules[bindCode] = [{ required: true, message: message }];
-    }else {
-      delete this.formRules[bindCode];
-    }
->>>>>>> 8fc96f02a52b52d94cb82584f5f6b970ef33ab34
-  }
-
-  setRules(isInit) {
-    const { formItemData, confForm } = this.state;
-    const config = isInit ? formItemData.config : confForm;
-    const { bindCode, message } = config;
-    // 修改非空提示信息
-    if(!(bindCode in this.formRules)) {
-      this.formRules[bindCode] = { required: true, message: message || '' };
-      return;
-    }
-    this.formRules[bindCode].message = message;
-  }
-
-  getFormData() {
-    console.log(this.formRules);
-    return {
-      formModel: this.formModel,
-      formRules: this.formRules
-    }
+  formSubmitFailed(value) {
+    console.log(value);
   }
 
   render() {
-    const state = this.state;
+    const { activeItem, mainData, confForm } = this.state;
     const confCheckboxOptions = [
       { label: '加粗', value: 'bold' },
       { label: '倾斜', value: 'italic' }
@@ -549,10 +391,10 @@ class AppComponent extends React.Component {
       {type: 'RADIO', name: 'Radio单选框'},
       {type: 'CHECKBOX', name: 'Checkbox多选框'},
       {type: 'TEXTAREA', name: 'Textarea文本框'},
-      {type: 'DATEPICKER', name: 'DatePicker日期选择'},
-      {type: 'TIMEPICKER', name: 'TimePicker时间选择'},
+      {type: 'DATEPICKER', name: 'DatePicker日期'},
+      {type: 'TIMEPICKER', name: 'TimePicker时间'},
       {type: 'SWITCH', name: 'Switch开关'},
-      {type: 'UPLOAD', name: 'Upload文件上传'}
+      {type: 'UPLOAD', name: 'Upload文件'}
     ];
 
     return (
@@ -567,33 +409,39 @@ class AppComponent extends React.Component {
               )
             })
           }
-          <button onClick={() => this.getFormData()}>获取表单数据</button>
         </div>
         <div className="layout-center">
-          <div className="form-container" onDragOver={(e) => this.mainDragOver(e) } onDrop={() => this.mainDrop()} onClick={() => this.clearActive()}>
-            <Form name="mainForm" ref={this.mainForm} onValuesChange={(changeVal, allVal) => this.mainFormChange(changeVal, allVal)}>  
+          <div className="form-container" onDragOver={(e) => this.mainDragOver(e) } onDrop={() => this.mainDrop()} onClick={() => this.props.changeActiveItem({})}>
+            <Form 
+              name="mainForm" 
+              ref={this.mainForm} 
+              onFinish={this.formSubmit}
+              onFinishFailed={() => this.formSubmitFailed()}
+              >  
               {
-                state.mainData.length > 0 && state.mainData.map(cellData => {
+                mainData.length > 0 && mainData.map(cellData => {
                   return <Cell 
                           key={cellData.cellId}
                           cellData={cellData}
                           removeOriFormItem={() => this.removeOriFormItem() }
                           changeFormItemPos={() => this.changeFormItemPos() }
                           removeCell={() => this.removeCel()}
-                          setFormKey={(...args) => this.setFormKey(args[0])}
                         ></Cell>
                 })
+              }
+              {
+                mainData.length > 0 ? <Button type="primary" htmlType="submit" className="submit-btn">提交</Button> : null
               }
             </Form>
           </div>
         </div>
-        <div className="layout-right">
-          <div className="conf-form">
+        <div className='layout-right'>
+          <div className="conf-form" hidden={activeItem.formItemId ? false : true}>
             <Form name="confForm" ref={this.confFormRef} onValuesChange={(changeVal, allVal) => this.confFormChange(changeVal, allVal)}>
-              <Form.Item label="字段名" name="bindCode">
-                <Input placeholder="请输入字段名" onFocus={() => this.cacheBindCode()} />
+              <Form.Item label="字段名" name="bindCode" rules={[{required: true, message: '字段名不能为空'}]}>
+                <Input placeholder="请输入字段名" />
               </Form.Item>
-              <Form.Item label="标签名" name="labelName">
+              <Form.Item label="标签名" name="labelName" rules={[{required: true, message: '标签名不能为空'}]}>
                 <Input placeholder="请输入标签名" />
               </Form.Item>
               <Form.Item label="标签字号" name="fontSize">
@@ -610,23 +458,23 @@ class AppComponent extends React.Component {
                 </Radio.Group>
               </Form.Item>
               {(() => {
-                  switch (state.formItemType) {
+                  switch (activeItem.type) {
                     case 'TEXT':
                     case 'TEXTAREA':
-                      return  <TextItem formData={state.confForm}></TextItem>
+                      return  <TextItem formData={confForm}></TextItem>
                     case 'NUMBER':
-                      return  <NumberItem formData={state.confForm}></NumberItem>
+                      return  <NumberItem formData={confForm}></NumberItem>
                     case 'DATEPICKER':
-                      return  <DatePickItem formData={state.confForm}></DatePickItem>
+                      return  <DatePickItem formData={confForm}></DatePickItem>
                     case 'SWITCH':
-                      return  <SwitchItem formData={state.confForm}></SwitchItem>
+                      return  <SwitchItem formData={confForm}></SwitchItem>
                     case 'UPLOAD':
-                      return  <UploadItem formData={state.confForm}></UploadItem>
+                      return  <UploadItem formData={confForm}></UploadItem>
                     case 'CHECKBOX':
                     case 'RADIO':
-                      return  <CheckItem formData={state.confForm} setOptions={(...args) => this.setOptions(args)}></CheckItem>
+                      return  <CheckItem formData={confForm} setOptions={(...args) => this.setOptions(args)}></CheckItem>
                     case 'SELECT':
-                      return <SelectItem formData={state.confForm} setOptions={(...args) => this.setOptions(args)}></SelectItem>
+                      return <SelectItem formData={confForm} setOptions={(...args) => this.setOptions(args)}></SelectItem>
                     default:
                       return null
                   }
@@ -634,15 +482,14 @@ class AppComponent extends React.Component {
               )()}
 
               <Form.Item label="是否必填" name="isRequired" shouldUpdate>
-                <Switch checked={state.confForm.isRequired}></Switch>
+                <Switch checked={confForm.isRequired}></Switch>
               </Form.Item>
               {
-                state.confForm.isRequired ? 
+                confForm.isRequired ? 
                   <Form.Item label="非空提示" name="message" shouldUpdate>
                     <Input placeholder="请输入字段为空时的提示" />
                   </Form.Item> : null
               }
-              
             </Form>
           </div>
         </div>
@@ -661,8 +508,8 @@ const mapStateToProps = function(state) {
 
 const mapDispathToProps = function(dispatch) {
   return {
-    changeDragData(formItemData) {
-      dispatch(setDragData(formItemData));
+    changeDragData(dragData) {
+      dispatch(setDragData(dragData));
     },
     changeInit(initDrag) {
       dispatch(setInitDrag(initDrag));

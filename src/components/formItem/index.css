@@ -3,8 +3,10 @@
   flex: 1;
   display: flex;
   padding: 5px;
-  align-items: center;
+  align-items: baseline;
   position: relative;
+  height: 60px;
+  box-sizing: border-box;
 }
 .form-item .form-item-label{
   margin-right: 5px;
