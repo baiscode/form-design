@@ -371,11 +371,11 @@ class AppComponent extends React.Component {
   }
 
   formSubmit(fieldsValue) {
-    console.log(fieldsValue);
+    alert(fieldsValue);
   }
 
-  formSubmitFailed(value) {
-    console.log(value);
+  getFormData() {
+    
   }
 
   render() {
