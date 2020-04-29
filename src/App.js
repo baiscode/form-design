@@ -2,10 +2,10 @@ import './App.css';
 import React, { useState } from 'react';
 import './index.css';
 import { connect } from 'react-redux';
-import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, Button, message } from 'antd';
+import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } from 'antd';
 import { PlusCircleOutlined, DeleteTwoTone } from '@ant-design/icons';
 import store from './store/store';
-import Cell from './components/cell';
+import MainForm from './components/cell';
 import { setActiveData, setInitDrag, setDragData } from './store/actionTypes'
 
 const objCopy = function(target) {
@@ -23,8 +23,10 @@ const objCopy = function(target) {
 const randomId = function(){
   let randomId = '';
   const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 'A', 'B', 'C', 'D', 'E', 'F'];
-  for (let i = 1; i <= 10; i++){
-    randomId += arr[Math.ceil(Math.random() * 15)] ;
+  let i = 10;
+  while(i) {
+    randomId += arr[Math.ceil(Math.random() * 15)] ;
+    i --;
   }
   return randomId;
 }
@@ -97,7 +99,7 @@ const OptionTable = ({ modelOptions, setOptions }) => {
       const targetOp = opts.find(item => {
         return item.key === target;
       })
-      if(!target) return;
+      if(!targetOp) return;
       targetOp[key] = value;
     }
     setState(opts);
@@ -171,7 +173,7 @@ class AppComponent extends React.Component {
       mainData: [],
       cellConfig: null,
       confForm: {},
-      activeItem: {},
+      activeItem: {}
     }
     this.formItemData = {};
     this.formModel = {};
@@ -281,57 +283,25 @@ class AppComponent extends React.Component {
    */
   mainDrop() {
     const cellId = randomId();
-    const mainData = this.state.mainData;
-    mainData.push({
-      cellId: cellId,
-      children: [Object.assign({}, this.formItemData, { pCellId: cellId })]
-    })
-    this.setState({ mainData: mainData })
+    this.setState((prevState) => {
+      const mainData = prevState.mainData;
+      mainData.push({
+        cellId: cellId,
+        children: [Object.assign({}, this.formItemData, { pCellId: cellId })]
+      })
+      return { mainData: mainData }; 
+    });
   }
 
   mainDragOver(e) {
     e.preventDefault();
   }
-  
-  /**
-   * 删除原先行中的表单元素
-   */
-  removeOriFormItem() {
-    const { mainData } = this.state;
-    const oriCell = mainData.find(cell => {
-      return cell.cellId === this.dragData.pCellId;
-    })
-    if(!oriCell) return false;
-    oriCell.children.forEach((formItem, index) => {
-      if(formItem.formItemId === this.dragData.formItemId) {
-        oriCell.children.splice(index, 1);
-      }
-    })
-    // 如果当前行中没有任何表单元素，则删除当前行
-    if(!oriCell.children.length) {
-      setTimeout(() => {
-        this.removeCell(oriCell);
-      }, 300)
-    }
-  }
 
-  /**
-   * 相同行中的表单元素互换位置
+    /**
+   * 删除行
+   * @param {object} cell 
    */
-  changeFormItemPos() {
-    const { mainData } = this.state;
-    const oriCell = mainData.find(cell => {
-      return cell.cellId === this.dragData.pCellId;
-    })
-    if(!oriCell) return;
-    const oriChildren = oriCell.children;
-    const dragIndex = oriChildren.indexOf(this.dragData);
-    const dropIndex = oriChildren.indexOf(this.dropData);
-    if(dragIndex === -1 || dropIndex === -1) return;
-    [ oriChildren[dragIndex], oriChildren[dropIndex] ] = [ oriChildren[dropIndex], oriChildren[dragIndex] ]
-  }
-
-  removeCell(cell) {
+  removeCell([cell]) {
     const mainData = this.state.mainData;
     const cellIndex = mainData.indexOf(cell);
     mainData.splice(cellIndex, 1)
@@ -412,32 +382,12 @@ class AppComponent extends React.Component {
         </div>
         <div className="layout-center">
           <div className="form-container" onDragOver={(e) => this.mainDragOver(e) } onDrop={() => this.mainDrop()} onClick={() => this.props.changeActiveItem({})}>
-            <Form 
-              name="mainForm" 
-              ref={this.mainForm} 
-              onFinish={this.formSubmit}
-              onFinishFailed={() => this.formSubmitFailed()}
-              >  
-              {
-                mainData.length > 0 && mainData.map(cellData => {
-                  return <Cell 
-                          key={cellData.cellId}
-                          cellData={cellData}
-                          removeOriFormItem={() => this.removeOriFormItem() }
-                          changeFormItemPos={() => this.changeFormItemPos() }
-                          removeCell={() => this.removeCel()}
-                        ></Cell>
-                })
-              }
-              {
-                mainData.length > 0 ? <Button type="primary" htmlType="submit" className="submit-btn">提交</Button> : null
-              }
-            </Form>
+            <MainForm mainData={[...mainData]} formSubmit={this.formSubmit} removeCell={(...args) => { this.removeCell(args) }}></MainForm>
           </div>
         </div>
         <div className='layout-right'>
           <div className="conf-form" hidden={activeItem.formItemId ? false : true}>
-            <Form name="confForm" ref={this.confFormRef} onValuesChange={(changeVal, allVal) => this.confFormChange(changeVal, allVal)}>
+            <Form name="confForm" ref={this.confFormRef} onValuesChange={(changeVal, allVal) => this.confFormChange(changeVal, allVal)} labelCol={{ span: 8, offset: 0 }}>
               <Form.Item label="字段名" name="bindCode" rules={[{required: true, message: '字段名不能为空'}]}>
                 <Input placeholder="请输入字段名" />
               </Form.Item>

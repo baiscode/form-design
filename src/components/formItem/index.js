@@ -12,8 +12,7 @@ class FormItemComponent extends React.Component {
   constructor(props) {
     super(props);
     this.props = props;
-    const { formItem } = this.props;
-    const { fontSize, textAlign, fontStyle } = formItem.config
+    const { fontSize, textAlign, fontStyle } = this.props.formItem.config
     this.state = {
       boxWidth: '',
       activeItem: this.props.activeItem,
@@ -35,17 +34,6 @@ class FormItemComponent extends React.Component {
       }
     }
 
-    const label = this.labelRef.current;
-    this.setState({ boxWidth: `calc(100% - ${label.offsetWidth + 25}px)` });
-
-    const observer = new MutationObserver(() => {
-      this.setState({ boxWidth: `calc(100% - ${label.offsetWidth + 25}px)` });
-    })
-    observer.observe(label, {
-      attributes: true,
-      subtree: true,
-      characterData: true,
-    });
     this.unsubscribe = store.subscribe(() => {
       const { activeItem } = store.getState();
       if(activeItem !== this.state.activeItem) {
@@ -93,14 +81,14 @@ class FormItemComponent extends React.Component {
   }
 
   render() {
-    const { formItem } = this.props;
+    const { formItem, isProd } = this.props;
     const { activeItem, boxWidth, formLabelStyle } = this.state;
     const config = formItem.config;
     return (
       <div className={`form-item ${formItem.formItemId === activeItem.formItemId ? 'active' : ''}`} draggable onDragStart={() => this.formItemDrag()} onClick={(e) => this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
           <label className={`form-item-label ${formItem.config.isRequired ? 'required': ''}`} style={formLabelStyle} ref={this.labelRef}>{formItem.config.labelName || ''}</label>
           <div className="form-item-box" style={{ width: boxWidth }}>
-            <Form.Item name={config.bindCode} rules={[{ required: config.isRequired, message: config.message }]}>
+            <Form.Item name={config.bindCode} rules={isProd ? [{ required: config.isRequired, message: config.message }] : []}>
               {(() => {
                 switch(formItem.type) {
                   case 'TEXT':
@@ -141,10 +129,10 @@ class FormItemComponent extends React.Component {
                 }
               })()}
             </Form.Item>
-            <i className="remove-icon" hidden={formItem.formItemId !== activeItem.formItemId}>
-              <DeleteTwoTone twoToneColor="#DC143C" onClick={() => this.removeFormItem()}/>
-            </i>
           </div>
+          <i className="remove-icon">
+            <DeleteTwoTone twoToneColor="#DC143C" onClick={() => this.removeFormItem()} hidden={formItem.formItemId !== activeItem.formItemId} />
+          </i>
       </div>
     )
   }
@@ -153,7 +141,8 @@ class FormItemComponent extends React.Component {
 FormItemComponent.propTypes = {
   formItem: PropTypes.object.isRequired,
   formItemDrop: PropTypes.func.isRequired,
-  remove: PropTypes.func.isRequired
+  remove: PropTypes.func.isRequired,
+  isProd: PropTypes.bool.isRequired
 }
 
 const mapStateToProps = function(state) {

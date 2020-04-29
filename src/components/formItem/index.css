@@ -2,11 +2,10 @@
   cursor: pointer;
   flex: 1;
   display: flex;
-  padding: 5px;
-  align-items: baseline;
+  align-items: center;
   position: relative;
-  height: 60px;
   box-sizing: border-box;
+  padding: 10px 5px;
 }
 .form-item .form-item-label{
   margin-right: 5px;
@@ -17,6 +16,7 @@
 }
 .form-item .form-item-box{
   display: inline-block;
+  flex-grow: 1;
 }
 .active{
   background: #ddeeff;
@@ -30,9 +30,7 @@
   color: red;
   margin-left: 5px;
   cursor: pointer;
-  position: absolute;
-  right: 3px;
-  top: 5px;
+  width: 20px;
 }
 .hidden-icon{
   visibility: hidden;
