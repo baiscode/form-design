@@ -8,7 +8,7 @@ import { DeleteTwoTone  } from '@ant-design/icons';
 import store from '../../store/store';
 import { setActiveData, setInitDrag, setDragData } from '../../store/actionTypes';
 
-class FormItemComponent extends React.Component {
+class FormItem extends React.Component {
   constructor(props) {
     super(props);
     this.props = props;
@@ -165,8 +165,7 @@ const mapDispatchToProps = function(dispatch) {
   }
 }
 
-const FormItem = connect(
+export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(FormItemComponent);
-export default FormItem;
+)(FormItem);

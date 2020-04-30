@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } from 'antd';
 import { PlusCircleOutlined, DeleteTwoTone } from '@ant-design/icons';
 import store from './store/store';
-import MainForm from './components/cell';
+import MainForm from './components/MainForm';
 import { setActiveData, setInitDrag, setDragData } from './store/actionTypes'
 
 const objCopy = function(target) {

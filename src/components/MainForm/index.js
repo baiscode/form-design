@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import store from '../../store/store';
 import './index.css';
-import FormItem from '../formItem';
+import FormItem from '../FormItem';
 import { setDropData } from '../../store/actionTypes';
 import { Form, Button } from 'antd';
 
-class CellComponent extends React.Component {
+class MainForm extends React.Component {
   constructor(props) {
     super(props);
     this.props = props;
@@ -138,7 +138,7 @@ class CellComponent extends React.Component {
   }
 }
 
-CellComponent.propTypes = {
+MainForm.propTypes = {
   mainData: PropTypes.array.isRequired,
   formSubmit: PropTypes.func.isRequired,
   removeCell: PropTypes.func.isRequired,
@@ -162,5 +162,5 @@ const mapDispatchToProps = (dispatch) => {
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(CellComponent);
+)(MainForm);
 
