@@ -2,10 +2,11 @@ import './App.css';
 import React, { useState } from 'react';
 import './index.css';
 import { connect } from 'react-redux';
-import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message } from 'antd';
+import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message, Button } from 'antd';
 import { PlusCircleOutlined, DeleteTwoTone } from '@ant-design/icons';
 import store from './store/store';
 import MainForm from './components/MainForm';
+import Preview from './components/Preview';
 import { setActiveData, setInitDrag, setDragData } from './store/actionTypes'
 
 const objCopy = function(target) {
@@ -173,7 +174,8 @@ class AppComponent extends React.Component {
       mainData: [],
       cellConfig: null,
       confForm: {},
-      activeItem: {}
+      activeItem: {},
+      hidden: true
     }
     this.formItemData = {};
     this.formModel = {};
@@ -270,7 +272,7 @@ class AppComponent extends React.Component {
     };
     config.message = `${config.labelName}不能为空`;
     this.formItemData = {
-      type: type,
+      type,
       formItemId: randomId(),
       config: Object.assign({}, this.defaultConfig, config)
     }
@@ -286,7 +288,7 @@ class AppComponent extends React.Component {
     this.setState((prevState) => {
       const mainData = prevState.mainData;
       mainData.push({
-        cellId: cellId,
+        cellId,
         children: [Object.assign({}, this.formItemData, { pCellId: cellId })]
       })
       return { mainData: mainData }; 
@@ -302,16 +304,17 @@ class AppComponent extends React.Component {
    * @param {object} cell 
    */
   removeCell([cell]) {
-    const mainData = this.state.mainData;
+    const { mainData } = this.state;
     const cellIndex = mainData.indexOf(cell);
+    if(cellIndex === -1) return;
     mainData.splice(cellIndex, 1)
     this.setState({ mainData: mainData });
   }
 
   confFormChange(changeVal) {
     const key = Object.keys(changeVal)[0];
-    const confForm = this.state.confForm;
-    if(!(key in confForm)) return;
+    const { confForm } = this.state;
+    if(!confForm.hasOwnProperty(key)) return;
     confForm[key] = changeVal[key];
     this.setState({ confForm: confForm });
   }
@@ -349,7 +352,7 @@ class AppComponent extends React.Component {
   }
 
   render() {
-    const { activeItem, mainData, confForm } = this.state;
+    const { activeItem, mainData, confForm, hidden } = this.state;
     const confCheckboxOptions = [
       { label: '加粗', value: 'bold' },
       { label: '倾斜', value: 'italic' }
@@ -382,8 +385,11 @@ class AppComponent extends React.Component {
         </div>
         <div className="layout-center">
           <div className="form-container" onDragOver={(e) => this.mainDragOver(e) } onDrop={() => this.mainDrop()} onClick={() => this.props.changeActiveItem({})}>
-            <MainForm mainData={[...mainData]} formSubmit={this.formSubmit} removeCell={(...args) => { this.removeCell(args) }}></MainForm>
+            <MainForm mainData={[...mainData]} removeCell={(...args) => { this.removeCell(args) }}></MainForm>
           </div>
+          {
+            mainData.length > 0 ? <Button className="preview-btn" onClick={() => { this.setState({ hidden: false }) }}>预览</Button> : null
+          }
         </div>
         <div className='layout-right'>
           <div className="conf-form" hidden={activeItem.formItemId ? false : true}>
@@ -443,6 +449,9 @@ class AppComponent extends React.Component {
             </Form>
           </div>
         </div>
+        <section className={hidden ? 'hidden' : ''}>
+          <Preview mainData={[...mainData]} formSubmit={this.formSubmit} hidePreview={ () => { this.setState({ hidden: true }) }}></Preview>
+        </section>
       </div>
     )
   }

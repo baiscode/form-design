@@ -1,0 +1,17 @@
+.preview {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  right: 0;
+  z-index: 9;
+  background: #ffffff;
+}
+.center {
+  width: 800px;
+  margin: 0 auto;
+}
+.close-btn {
+  float: right;
+  margin-top: 10px;
+}

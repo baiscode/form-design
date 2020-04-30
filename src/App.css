@@ -3,6 +3,11 @@
 }
 .main {
   display: flex;
+  padding: 10px;
+  box-sizing: border-box;
+  position: relative;
+  height: 100%;
+  width: 100%;
 }
 .layout{
   cursor: move;
@@ -34,6 +39,9 @@
   margin-top: 10px;
   position: absolute !important;
   bottom: 0;
+}
+.preview-btn {
+  float: right;
 }
 .hidden {
   display: none;

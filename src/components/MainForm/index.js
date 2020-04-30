@@ -5,7 +5,7 @@ import store from '../../store/store';
 import './index.css';
 import FormItem from '../FormItem';
 import { setDropData } from '../../store/actionTypes';
-import { Form, Button } from 'antd';
+import { Form } from 'antd';
 
 class MainForm extends React.Component {
   constructor(props) {
@@ -60,7 +60,7 @@ class MainForm extends React.Component {
     if(itemIndex > -1) {
       cellChildren.splice(itemIndex, 1);
     }
-    if(cellData.children.length === 0) {
+    if(!cellData.children.length) {
       this.props.removeCell(cellData);
     }
   }
@@ -75,7 +75,6 @@ class MainForm extends React.Component {
     })
     if(!oriCell) return;
     const oriChildren = oriCell.children;
-    console.log(oriChildren)
     const dragIndex = oriChildren.indexOf(this.dragData);
     const dropIndex = oriChildren.indexOf(this.dropData);
     if(dragIndex === -1 || dropIndex === -1) return;
@@ -129,9 +128,6 @@ class MainForm extends React.Component {
                   </div>
           })
         }
-        {
-          mainData.length > 0 ? <Button type="primary" htmlType="submit" className="submit-btn">提交</Button> : null
-        }
         </Form>
      
     )
@@ -140,8 +136,8 @@ class MainForm extends React.Component {
 
 MainForm.propTypes = {
   mainData: PropTypes.array.isRequired,
-  formSubmit: PropTypes.func.isRequired,
-  removeCell: PropTypes.func.isRequired,
+  formSubmit: PropTypes.func,
+  removeCell: PropTypes.func,
   isProd: PropTypes.bool
 }
 

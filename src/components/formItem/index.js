@@ -138,7 +138,7 @@ class FormItem extends React.Component {
   }
 }
 
-FormItemComponent.propTypes = {
+FormItem.propTypes = {
   formItem: PropTypes.object.isRequired,
   formItemDrop: PropTypes.func.isRequired,
   remove: PropTypes.func.isRequired,
