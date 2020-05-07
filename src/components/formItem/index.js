@@ -12,7 +12,7 @@ class FormItem extends React.Component {
   constructor(props) {
     super(props);
     this.props = props;
-    const { fontSize, textAlign, fontStyle } = this.props.formItem.config
+    const { fontSize, textAlign, fontStyle } = this.props.formItem
     this.state = {
       activeItem: this.props.activeItem,
       formLabelStyle:  {
@@ -48,13 +48,13 @@ class FormItem extends React.Component {
 
   static getDerivedStateFromProps(newProps, curState) {
     if(newProps.formItem !== curState.formItem) {
-      const config = newProps.formItem.config;
+      const formItem = newProps.formItem;
       return {
         formLabelStyle: {
-          textAlign: config.textAlign,
-          fontWeight: config.fontStyle.includes('bold') ? 'bold' : '',
-          fontStyle: config.fontStyle.includes('italic') ? 'italic': '',
-          fontSize: config.fontSize + 'px'
+          textAlign: formItem.textAlign,
+          fontWeight: formItem.fontStyle.includes('bold') ? 'bold' : '',
+          fontStyle: formItem.fontStyle.includes('italic') ? 'italic': '',
+          fontSize: formItem.fontSize + 'px'
         }
       }
     }
@@ -82,43 +82,44 @@ class FormItem extends React.Component {
   render() {
     const { formItem, isProd } = this.props;
     const { activeItem, formLabelStyle } = this.state;
-    const config = formItem.config;
+    const { type, name, isRequired, labelName, message, attrs, showTime } = formItem;
+    console.log(formItem);
     return (
       <div className={isProd ? 'prod-form-item' : `dev-form-item ${formItem === activeItem ? 'active' : ''}`} draggable={!isProd} onDragStart={() => this.formItemDrag()} onClick={(e) => !isProd && this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
-          <label className={`form-item-label ${formItem.config.isRequired ? 'required': ''}`} style={formLabelStyle} ref={this.labelRef}>{formItem.config.labelName || ''}</label>
+          <label className={`form-item-label ${isRequired ? 'required': ''}`} style={formLabelStyle} ref={this.labelRef}>{labelName}</label>
           <div className="form-item-box">
-            <Form.Item name={config.bindCode} rules={isProd ? [{ required: config.isRequired, message: config.message }] : []}>
+            <Form.Item name={name} rules={isProd ? [{ required: isRequired, message: message }] : []}>
               {(() => {
-                switch(formItem.type) {
+                switch(type) {
                   case 'TEXT':
-                    return <Input placeholder={config.placeholder}  />
+                    return <Input {...attrs} />
                   case 'NUMBER':
-                    return <InputNumber min={config.min} max={config.max} precision={config.precision} />
+                    return <InputNumber {...attrs} />
                   case 'TEXTAREA':
-                    return <Input.TextArea placeholder={config.placeholder} />
+                    return <Input.TextArea {...attrs} />
                   case 'SELECT':
-                    return  <Select style={{ width: 150 }} placeholder={config.placeholder}>
-                              {config.options.map(option => {
+                    return  <Select style={{ width: 150 }} {...attrs}>
+                              {formItem.options.map(option => {
                                 return <Select.Option value={option.value} key={option.value}>{option.label}</Select.Option>
                               })}
                             </Select>
                     
                   case 'RADIO':
                     return  <Radio.Group>
-                              {config.options.map(option => {
+                              {formItem.options.map(option => {
                                 return <Radio value={option.value} key={option.value}>{option.label}</Radio>
                               })}
                             </Radio.Group>
                   case 'CHECKBOX':
-                    return <Checkbox.Group options={config.options} />
+                    return <Checkbox.Group options={formItem.options} />
                   case 'DATEPICKER':
-                    return <DatePicker showTime={config.showTime === 'datetime'} format={config.showTime === 'datetime' ? 'YYYY-MM-DD HH:ii:ss' : 'YYYY-MM-DD'}/>
+                    return <DatePicker {...attrs} format={showTime ? 'YYYY-MM-DD HH:ii:ss' : 'YYYY-MM-DD'}/>
                   case 'TIMEPICKER':
                     return <TimePicker />
                   case 'SWITCH': 
-                    return <Switch onClick={(checked, e) => e.stopPropagation(e)} />
+                    return <Switch onClick={(checked, e) => e.stopPropagation(e)} {...attrs} />
                   case 'UPLOAD':
-                    return <Upload action={config.action} fileList={[]}>
+                    return <Upload fileList={[]} {...attrs}>
                       <Button>
                         点击上传
                       </Button>

@@ -8,29 +8,8 @@ import store from './store/store';
 import MainForm from './components/MainForm';
 import Preview from './components/Preview';
 import { setActiveData, setInitDrag, setDragData } from './store/actionTypes'
-
-const objCopy = function(target) {
-  if(typeof target === 'object') {
-    const copyTarget = Array.isArray(target) ? [] : {};
-    for(let i in target) {
-      copyTarget[i] = objCopy(target[i]);
-    }
-    return copyTarget;
-  }else {
-    return target;
-  }
-}
-
-const randomId = function(){
-  let randomId = '';
-  const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 'A', 'B', 'C', 'D', 'E', 'F'];
-  let i = 10;
-  while(i) {
-    randomId += arr[Math.ceil(Math.random() * 15)] ;
-    i --;
-  }
-  return randomId;
-}
+import { objCopy, randomId } from './utils';
+import { formItems, getConf } from './attrs';
 
 const addIcon = (changeOption) => {
   return <PlusCircleOutlined onClick={() => changeOption()}/>
@@ -170,11 +149,9 @@ class AppComponent extends React.Component {
     super(props);
     this.props = props;
     this.state = {
-      layoutData: null,
       mainData: [],
-      cellConfig: null,
       confForm: {},
-      activeItem: {},
+      attrForm: {},
       hidden: true
     }
     this.formItemData = {};
@@ -182,13 +159,7 @@ class AppComponent extends React.Component {
     this.dragData = {};
     this.dropData = {};
     this.dragType = '';
-    this.defaultConfig = {
-      'labelName': '',
-      'fontSize': 14,
-      'textAlign': 'center',
-      'bindCode': '',
-      'fontStyle': [],
-    }
+  
     this.confFormRef = React.createRef();
     this.mainForm = React.createRef();
   }
@@ -198,12 +169,11 @@ class AppComponent extends React.Component {
       const newState = store.getState();
       const { activeItem, dragData, dropData } = newState;
       if(activeItem !== this.props.activeItem) {
-        const config = activeItem.config || this.defaultConfig;
-        this.setState({ confForm: config, activeItem: activeItem  });
-        this.confFormRef.current.setFieldsValue(config);
+        this.setState({ confForm: activeItem });
+        this.confFormRef.current.setFieldsValue(activeItem);
       }
-      if(dragData !== this.dragData) this.dragData = newState.dragData;
-      if(dropData !== this.dropData) this.dropData = newState.dropData;
+      this.dragData = dragData;
+      this.dropData = dropData;
     })
   }
 
@@ -213,68 +183,15 @@ class AppComponent extends React.Component {
 
   /**
    * 左侧列表拖拽开始事件
-   * @param {*} type 拖拽的类别
+   * @param {string} type 拖拽的类别
    */
   formItemDrag(type) {
     this.dragType = type;
-    const config = {
-      bindCode: 'name_' + randomId(),
-      isRequired: true,
-    }
-    switch(type) {
-      case 'TEXT': 
-        config.labelName = '输入框';
-        config.placeholder = '';
-        break;
-      case 'NUMBER': 
-        config.max = 1000;
-        config.min = 0;
-        config.labelName = '数字框';
-        config.precision = 0;
-        break;
-      case 'SELECT': 
-        config.options = [];
-        config.labelName = '下拉框';
-        config.placeholder = '';
-        break;
-      case 'RADIO': 
-        config.options = [];
-        config.labelName = '单选框';
-        break;
-      case 'CHECKBOX': 
-        config.options = [];
-        config.labelName = '多选框';
-        break;
-      case 'TEXTAREA': 
-        config.maxLength = 100;
-        config.labelName = '文本框';
-        config.placeholder = '';
-        break;
-      case 'DATEPICKER': 
-        config.showTime = 'date';
-        config.labelName = '日期';
-        break;
-      case 'TIMEPICKER':
-        config.labelName = '时间';
-        break;
-      case 'SWITCH': 
-        config.labelName = '开关';
-        config.activeVal = 1;
-        config.inactiveVal = 0;
-        break;
-      case 'UPLOAD':
-        config.action = '';
-        config.labelName = '文件';
-        config.tip = '';
-        break;
-      default:
-        break;
-    };
-    config.message = `${config.labelName}不能为空`;
+    console.log(getConf(type));
     this.formItemData = {
       type,
       formItemId: randomId(),
-      config: {...this.defaultConfig, ...config}
+      ...getConf(type),
     }
     this.props.changeDragData(this.formItemData);
     this.props.changeInit(true);
@@ -289,7 +206,7 @@ class AppComponent extends React.Component {
       const mainData = prevState.mainData;
       mainData.push({
         cellId,
-        children: [Object.assign({}, this.formItemData, { pCellId: cellId })]
+        children: [{...this.formItemData, pCellId: cellId }]
       })
       return { mainData: mainData }; 
     });
@@ -299,10 +216,10 @@ class AppComponent extends React.Component {
     e.preventDefault();
   }
 
-    /**
-   * 删除行
-   * @param {object} cell 
-   */
+  /**
+ * 删除行
+ * @param {object} cell 
+ */
   removeCell(cell) {
     const { mainData } = this.state;
     const cellIndex = mainData.indexOf(cell);
@@ -321,11 +238,11 @@ class AppComponent extends React.Component {
 
   /**
    * 设置下拉/单选/多选的options
-   * @param {object} param0 
+   * @param {array} param: 选项数组
    */
-  setOptions([options]) {
+  setOptions(options) {
     const { confForm } = this.state;
-    if(!confForm.bindCode.length) {
+    if(!confForm.name.length) {
       message.warn('请先填写字段名');
       return false;
     }
@@ -348,32 +265,19 @@ class AppComponent extends React.Component {
   }
 
   render() {
-    const { activeItem, mainData, confForm, hidden } = this.state;
-    const confCheckboxOptions = [
+    const { mainData, confForm, hidden } = this.state;
+    const confOptions = [
       { label: '加粗', value: 'bold' },
       { label: '倾斜', value: 'italic' }
     ];
-    const formItems = [
-      {type: 'TEXT', name: 'Input输入框'}, 
-      {type: 'NUMBER', name: 'InputNumber数字框'}, 
-      {type: 'SELECT', name: 'Select下拉框'},
-      {type: 'RADIO', name: 'Radio单选框'},
-      {type: 'CHECKBOX', name: 'Checkbox多选框'},
-      {type: 'TEXTAREA', name: 'Textarea文本框'},
-      {type: 'DATEPICKER', name: 'DatePicker日期'},
-      {type: 'TIMEPICKER', name: 'TimePicker时间'},
-      {type: 'SWITCH', name: 'Switch开关'},
-      {type: 'UPLOAD', name: 'Upload文件'}
-    ];
-
     return (
       <div className="main">
         <div className="layout-left">
           {
-            formItems.map(formItem => {
+            Object.values(formItems).map(formItem => {
               return (
                 <div className="formitem-item" key={formItem.type} draggable onDragStart={ () => this.formItemDrag(formItem.type)}>
-                  {formItem.name}
+                  {formItem.labelName}
                 </div>
               )
             })
@@ -388,9 +292,9 @@ class AppComponent extends React.Component {
           }
         </div>
         <div className='layout-right'>
-          <div className="conf-form" hidden={activeItem.formItemId ? false : true}>
+          <div className="conf-form" hidden={confForm.formItemId ? false : true}>
             <Form name="confForm" ref={this.confFormRef} onValuesChange={(changeVal, allVal) => this.confFormChange(changeVal, allVal)} labelCol={{ span: 8, offset: 0 }}>
-              <Form.Item label="字段名" name="bindCode" rules={[{required: true, message: '字段名不能为空'}]}>
+              <Form.Item label="字段名" name="name" rules={[{required: true, message: '字段名不能为空'}]}>
                 <Input placeholder="请输入字段名" />
               </Form.Item>
               <Form.Item label="标签名" name="labelName" rules={[{required: true, message: '标签名不能为空'}]}>
@@ -400,7 +304,7 @@ class AppComponent extends React.Component {
                 <InputNumber />
               </Form.Item>
               <Form.Item label="标签字体" name="fontStyle">
-                <Checkbox.Group options={confCheckboxOptions} size="small"></Checkbox.Group>
+                <Checkbox.Group options={confOptions} size="small"></Checkbox.Group>
               </Form.Item>
               <Form.Item label="标签对齐" name="textAlign">
                 <Radio.Group size="small">
@@ -410,7 +314,7 @@ class AppComponent extends React.Component {
                 </Radio.Group>
               </Form.Item>
               {(() => {
-                  switch (activeItem.type) {
+                  switch (confForm.type) {
                     case 'TEXT':
                     case 'TEXTAREA':
                       return  <TextItem formData={confForm}></TextItem>
@@ -424,9 +328,9 @@ class AppComponent extends React.Component {
                       return  <UploadItem formData={confForm}></UploadItem>
                     case 'CHECKBOX':
                     case 'RADIO':
-                      return  <CheckItem formData={confForm} setOptions={(...args) => this.setOptions(args)}></CheckItem>
+                      return  <CheckItem formData={confForm} setOptions={(...args) => this.setOptions(...args)}></CheckItem>
                     case 'SELECT':
-                      return <SelectItem formData={confForm} setOptions={(...args) => this.setOptions(args)}></SelectItem>
+                      return <SelectItem formData={confForm} setOptions={(...args) => this.setOptions(...args)}></SelectItem>
                     default:
                       return null
                   }
