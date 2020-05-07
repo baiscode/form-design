@@ -53,6 +53,10 @@ const getConf = function(type) {
     case SELECT:
       attrs.placeholder = '';
       break;
+    case CHECKBOX:
+    case RADIO:
+      attrs.options = [];
+      break;
     case TEXTAREA:
       attrs.placeholder = '请输入';
       attrs.maxLength = 500;

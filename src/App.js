@@ -162,6 +162,7 @@ class AppComponent extends React.Component {
   
     this.confFormRef = React.createRef();
     this.mainForm = React.createRef();
+    this.attrFormRef = React.createRef();
   }
 
   componentDidMount() {
@@ -236,6 +237,14 @@ class AppComponent extends React.Component {
     this.setState({ confForm: confForm });
   }
 
+  attrFormChange(changeVal) {
+    const key = Object.keys(changeVal)[0];
+    const { confForm } = this.state;
+    if(!confForm.hasOwnProperty(key)) return;
+    confForm[key] = changeVal[key];
+    this.setState({ confForm: confForm });
+  }
+
   /**
    * 设置下拉/单选/多选的options
    * @param {array} param: 选项数组
@@ -265,7 +274,7 @@ class AppComponent extends React.Component {
   }
 
   render() {
-    const { mainData, confForm, hidden } = this.state;
+    const { mainData, confForm, hidden, attrForm } = this.state;
     const confOptions = [
       { label: '加粗', value: 'bold' },
       { label: '倾斜', value: 'italic' }
@@ -313,30 +322,6 @@ class AppComponent extends React.Component {
                   <Radio.Button value="right">右对齐</Radio.Button>
                 </Radio.Group>
               </Form.Item>
-              {(() => {
-                  switch (confForm.type) {
-                    case 'TEXT':
-                    case 'TEXTAREA':
-                      return  <TextItem formData={confForm}></TextItem>
-                    case 'NUMBER':
-                      return  <NumberItem formData={confForm}></NumberItem>
-                    case 'DATEPICKER':
-                      return  <DatePickItem formData={confForm}></DatePickItem>
-                    case 'SWITCH':
-                      return  <SwitchItem formData={confForm}></SwitchItem>
-                    case 'UPLOAD':
-                      return  <UploadItem formData={confForm}></UploadItem>
-                    case 'CHECKBOX':
-                    case 'RADIO':
-                      return  <CheckItem formData={confForm} setOptions={(...args) => this.setOptions(...args)}></CheckItem>
-                    case 'SELECT':
-                      return <SelectItem formData={confForm} setOptions={(...args) => this.setOptions(...args)}></SelectItem>
-                    default:
-                      return null
-                  }
-                }
-              )()}
-
               <Form.Item label="是否必填" name="isRequired" shouldUpdate>
                 <Switch checked={confForm.isRequired}></Switch>
               </Form.Item>
@@ -346,6 +331,31 @@ class AppComponent extends React.Component {
                     <Input placeholder="请输入字段为空时的提示" />
                   </Form.Item> : null
               }
+            </Form>
+            <Form name="attrForm" ref={this.attrFormRef} onValuesChange={(changeVal, allVal) => this.attrFormChange(changeVal, allVal)} labelCol={{ span: 8, offset: 0 }}>
+              {(() => {
+                    switch (confForm.type) {
+                      case 'TEXT':
+                      case 'TEXTAREA':
+                        return  <TextItem formData={attrForm}></TextItem>
+                      case 'NUMBER':
+                        return  <NumberItem formData={attrForm}></NumberItem>
+                      case 'DATEPICKER':
+                        return  <DatePickItem formData={attrForm}></DatePickItem>
+                      case 'SWITCH':
+                        return  <SwitchItem formData={attrForm}></SwitchItem>
+                      case 'UPLOAD':
+                        return  <UploadItem formData={attrForm}></UploadItem>
+                      case 'CHECKBOX':
+                      case 'RADIO':
+                        return  <CheckItem formData={attrForm} setOptions={(...args) => this.setOptions(...args)}></CheckItem>
+                      case 'SELECT':
+                        return <SelectItem formData={attrForm} setOptions={(...args) => this.setOptions(...args)}></SelectItem>
+                      default:
+                        return null
+                    }
+                  }
+                )()}
             </Form>
           </div>
         </div>

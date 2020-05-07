@@ -105,13 +105,9 @@ class FormItem extends React.Component {
                             </Select>
                     
                   case 'RADIO':
-                    return  <Radio.Group>
-                              {formItem.options.map(option => {
-                                return <Radio value={option.value} key={option.value}>{option.label}</Radio>
-                              })}
-                            </Radio.Group>
+                    return  <Radio.Group {...attrs} />
                   case 'CHECKBOX':
-                    return <Checkbox.Group options={formItem.options} />
+                    return <Checkbox.Group {...attrs} />
                   case 'DATEPICKER':
                     return <DatePicker {...attrs} format={showTime ? 'YYYY-MM-DD HH:ii:ss' : 'YYYY-MM-DD'}/>
                   case 'TIMEPICKER':
