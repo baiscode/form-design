@@ -6,12 +6,17 @@
   right: 0;
   z-index: 9;
   background: #ffffff;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
 }
-.center {
+.left-box {
   width: 800px;
-  margin: 0 auto;
+}
+.right-box {
+  margin-left: 20px;
 }
 .close-btn {
   float: right;
-  margin-top: 10px;
+  margin: 10px 10px 0 0;
 }

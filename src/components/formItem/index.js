@@ -14,7 +14,6 @@ class FormItem extends React.Component {
     this.props = props;
     const { fontSize, textAlign, fontStyle } = this.props.formItem.config
     this.state = {
-      boxWidth: '',
       activeItem: this.props.activeItem,
       formLabelStyle:  {
         textAlign: textAlign,
@@ -82,12 +81,12 @@ class FormItem extends React.Component {
 
   render() {
     const { formItem, isProd } = this.props;
-    const { activeItem, boxWidth, formLabelStyle } = this.state;
+    const { activeItem, formLabelStyle } = this.state;
     const config = formItem.config;
     return (
-      <div className={`form-item ${formItem.formItemId === activeItem.formItemId ? 'active' : ''}`} draggable onDragStart={() => this.formItemDrag()} onClick={(e) => this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
+      <div className={isProd ? 'prod-form-item' : `dev-form-item ${formItem === activeItem ? 'active' : ''}`} draggable={!isProd} onDragStart={() => this.formItemDrag()} onClick={(e) => !isProd && this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
           <label className={`form-item-label ${formItem.config.isRequired ? 'required': ''}`} style={formLabelStyle} ref={this.labelRef}>{formItem.config.labelName || ''}</label>
-          <div className="form-item-box" style={{ width: boxWidth }}>
+          <div className="form-item-box">
             <Form.Item name={config.bindCode} rules={isProd ? [{ required: config.isRequired, message: config.message }] : []}>
               {(() => {
                 switch(formItem.type) {
@@ -113,7 +112,7 @@ class FormItem extends React.Component {
                   case 'CHECKBOX':
                     return <Checkbox.Group options={config.options} />
                   case 'DATEPICKER':
-                    return <DatePicker showTime={config.dateType === 'datetime'} format={config.dateType === 'datetime' ? 'YYYY-MM-DD HH:ii:ss' : 'YYYY-MM-DD'}/>
+                    return <DatePicker showTime={config.showTime === 'datetime'} format={config.showTime === 'datetime' ? 'YYYY-MM-DD HH:ii:ss' : 'YYYY-MM-DD'}/>
                   case 'TIMEPICKER':
                     return <TimePicker />
                   case 'SWITCH': 
@@ -130,9 +129,11 @@ class FormItem extends React.Component {
               })()}
             </Form.Item>
           </div>
-          <i className="remove-icon">
-            <DeleteTwoTone twoToneColor="#DC143C" onClick={() => this.removeFormItem()} hidden={formItem.formItemId !== activeItem.formItemId} />
-          </i>
+          {
+            !isProd ? <i className="remove-icon">
+                        <DeleteTwoTone twoToneColor="#DC143C" onClick={() => this.removeFormItem()} hidden={formItem.formItemId !== activeItem.formItemId} />
+                      </i> : null
+          }
       </div>
     )
   }

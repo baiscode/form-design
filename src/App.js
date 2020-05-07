@@ -60,7 +60,7 @@ const NumberItem = () => {
 
 const DatePickItem = () => {
   return <section>
-          <Form.Item label="显示类型" name="dateType">
+          <Form.Item label="显示类型" name="showTime">
             <Radio.Group size="small" buttonStyle="solid">
               <Radio.Button value="date">日期</Radio.Button>
               <Radio.Button value="datetime">日期时间</Radio.Button>
@@ -251,7 +251,7 @@ class AppComponent extends React.Component {
         config.placeholder = '';
         break;
       case 'DATEPICKER': 
-        config.dateType = 'date';
+        config.showTime = 'date';
         config.labelName = '日期';
         break;
       case 'TIMEPICKER':
@@ -274,7 +274,7 @@ class AppComponent extends React.Component {
     this.formItemData = {
       type,
       formItemId: randomId(),
-      config: Object.assign({}, this.defaultConfig, config)
+      config: {...this.defaultConfig, ...config}
     }
     this.props.changeDragData(this.formItemData);
     this.props.changeInit(true);
@@ -303,7 +303,7 @@ class AppComponent extends React.Component {
    * 删除行
    * @param {object} cell 
    */
-  removeCell([cell]) {
+  removeCell(cell) {
     const { mainData } = this.state;
     const cellIndex = mainData.indexOf(cell);
     if(cellIndex === -1) return;
@@ -341,10 +341,6 @@ class AppComponent extends React.Component {
     const { confForm } = this.state;
     const optionIndex = confForm.options.indexOf(option);
     if(optionIndex > -1) confForm.options.splice(optionIndex, 1);
-  }
-
-  formSubmit(fieldsValue) {
-    alert(fieldsValue);
   }
 
   getFormData() {
@@ -385,10 +381,10 @@ class AppComponent extends React.Component {
         </div>
         <div className="layout-center">
           <div className="form-container" onDragOver={(e) => this.mainDragOver(e) } onDrop={() => this.mainDrop()} onClick={() => this.props.changeActiveItem({})}>
-            <MainForm mainData={[...mainData]} removeCell={(...args) => { this.removeCell(args) }}></MainForm>
+            <MainForm mainData={[...mainData]} removeCell={(...args) => this.removeCell(...args) } isProd={false}></MainForm>
           </div>
           {
-            mainData.length > 0 ? <Button className="preview-btn" onClick={() => { this.setState({ hidden: false }) }}>预览</Button> : null
+            mainData.length > 0 ? <Button className="preview-btn" onClick={() => this.setState({ hidden: false }) }>预览</Button> : null
           }
         </div>
         <div className='layout-right'>
@@ -450,7 +446,7 @@ class AppComponent extends React.Component {
           </div>
         </div>
         <section className={hidden ? 'hidden' : ''}>
-          <Preview mainData={[...mainData]} formSubmit={this.formSubmit} hidePreview={ () => { this.setState({ hidden: true }) }}></Preview>
+          <Preview mainData={[...mainData]} hidePreview={ () => this.setState({ hidden: true }) }></Preview>
         </section>
       </div>
     )

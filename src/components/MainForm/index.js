@@ -5,7 +5,7 @@ import store from '../../store/store';
 import './index.css';
 import FormItem from '../FormItem';
 import { setDropData } from '../../store/actionTypes';
-import { Form } from 'antd';
+import { Form, Button } from 'antd';
 
 class MainForm extends React.Component {
   constructor(props) {
@@ -36,8 +36,7 @@ class MainForm extends React.Component {
   cellDrop(e, cellData) {
     e.stopPropagation();
     const { initDrag, dragData } = this;
-    
-    const data = Object.assign({}, dragData, { pCellId: cellData.cellId });
+    const data = {...dragData, pCellId: cellData.cellId};
     if(initDrag || dragData.pCellId !== cellData.cellId) {
       cellData.children.push(data);
       this.setState({ cellData: cellData });
@@ -90,11 +89,9 @@ class MainForm extends React.Component {
       return cell.cellId === this.dragData.pCellId;
     })
     if(!oriCell) return false;
-    oriCell.children.forEach((formItem, index) => {
-      if(formItem.formItemId === this.dragData.formItemId) {
-        oriCell.children.splice(index, 1);
-      }
-    })
+    const targetI = oriCell.children.indexOf(this.dragData)
+    if(targetI === -1) return;
+    oriCell.children.splice(targetI, 1)
     // 如果当前行中没有任何表单元素，则删除当前行
     if(!oriCell.children.length) {
       setTimeout(() => {
@@ -103,17 +100,21 @@ class MainForm extends React.Component {
     }
   }
 
+  formSubmit(values) {
+    this.props.submit(values);
+  }
+
   render() {
-    const { mainData } = this.props;
+    const { mainData, isProd } = this.props;
     return (
       <Form 
         name="mainForm" 
         ref={this.mainForm} 
-        onFinish={this.formSubmit}
-        >  
+        onFinish={ (...args) => this.formSubmit(...args) }
+      >  
         {
           mainData.length > 0 && mainData.map(cellData => {
-            return <div className="cell" onDragOver={(e) => this.cellDragOver(e)} onDrop={(e) => this.cellDrop(e, cellData)} key={cellData.cellId}>
+            return <div className={isProd ? 'prod-cell' : 'dev-cell'} onDragOver={(e) => this.cellDragOver(e)} onDrop={(e) => this.cellDrop(e, cellData)} key={cellData.cellId}>
                       {
                         cellData.children.map(formItem => {
                           return <FormItem 
@@ -121,12 +122,15 @@ class MainForm extends React.Component {
                             formItem={formItem}
                             formItemDrop={(...args) => this.formItemDrop(args, cellData)}
                             remove={(...args) => this.removeFormItem(args, cellData)}
-                            isProd={this.props.isProd || false}
+                            isProd={isProd}
                           ></FormItem>
                         })
                       }
                   </div>
           })
+        }
+        {
+          isProd ? <Button type="primary" className="submit-btn" htmlType="submit">提交</Button> : null
         }
         </Form>
      
@@ -136,7 +140,7 @@ class MainForm extends React.Component {
 
 MainForm.propTypes = {
   mainData: PropTypes.array.isRequired,
-  formSubmit: PropTypes.func,
+  submit: PropTypes.func,
   removeCell: PropTypes.func,
   isProd: PropTypes.bool
 }

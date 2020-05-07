@@ -1,4 +1,4 @@
-.form-item  .ant-form-item {
+.dev-form-item .ant-form-item {
   margin-bottom: 0 !important;
 }
 .main {
@@ -34,11 +34,6 @@
 }
 .pointer{
   cursor: pointer;
-}
-.submit-btn {
-  margin-top: 10px;
-  position: absolute !important;
-  bottom: 0;
 }
 .preview-btn {
   float: right;

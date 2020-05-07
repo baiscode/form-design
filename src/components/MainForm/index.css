@@ -1,5 +1,10 @@
-.cell{
-  border: 1px dashed #ccc;
+.prod-cell {
   display: flex;
-  box-sizing: border-box;
+}
+.dev-cell{
+  border: 1px dashed #ccc;
+}
+.submit-btn {
+  float: right;
+  margin-top: 10px;
 }
