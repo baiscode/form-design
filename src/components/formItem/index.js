@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import './index.css';
 import { Form, Input, InputNumber, Checkbox, Radio, Select, TimePicker, Switch, DatePicker, Upload, Button } from 'antd';
-import { DeleteTwoTone  } from '@ant-design/icons';
+import { DeleteTwoTone } from '@ant-design/icons';
 import store from '../../store/store';
 import { setActiveData, setInitDrag, setDragData } from '../../store/actionTypes';
 
@@ -83,7 +83,6 @@ class FormItem extends React.Component {
     const { formItem, isProd } = this.props;
     const { activeItem, formLabelStyle } = this.state;
     const { type, name, isRequired, labelName, message, attrs, showTime } = formItem;
-    console.log(formItem);
     return (
       <div className={isProd ? 'prod-form-item' : `dev-form-item ${formItem === activeItem ? 'active' : ''}`} draggable={!isProd} onDragStart={() => this.formItemDrag()} onClick={(e) => !isProd && this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
           <label className={`form-item-label ${isRequired ? 'required': ''}`} style={formLabelStyle} ref={this.labelRef}>{labelName}</label>
@@ -98,12 +97,7 @@ class FormItem extends React.Component {
                   case 'TEXTAREA':
                     return <Input.TextArea {...attrs} />
                   case 'SELECT':
-                    return  <Select style={{ width: 150 }} {...attrs}>
-                              {formItem.options.map(option => {
-                                return <Select.Option value={option.value} key={option.value}>{option.label}</Select.Option>
-                              })}
-                            </Select>
-                    
+                    return  <Select style={{ width: 150 }} {...attrs}></Select>
                   case 'RADIO':
                     return  <Radio.Group {...attrs} />
                   case 'CHECKBOX':

@@ -52,6 +52,7 @@ const getConf = function(type) {
       break;
     case SELECT:
       attrs.placeholder = '';
+      attrs.options = [];
       break;
     case CHECKBOX:
     case RADIO:

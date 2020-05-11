@@ -2,7 +2,7 @@ import './App.css';
 import React, { useState } from 'react';
 import './index.css';
 import { connect } from 'react-redux';
-import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, message, Button } from 'antd';
+import { Form, Input, InputNumber, Checkbox, Radio, Table, Switch, Button } from 'antd';
 import { PlusCircleOutlined, DeleteTwoTone } from '@ant-design/icons';
 import store from './store/store';
 import MainForm from './components/MainForm';
@@ -70,7 +70,7 @@ const UploadItem = () => {
 }
 
 const OptionTable = ({ modelOptions, setOptions }) => {
-  const [options, setState] = useState(modelOptions);
+  const [options, setState] = useState(objCopy(modelOptions));
   const changeOption = function(key, value, target) {
     const opts = objCopy(options);
     if(!key) {
@@ -161,7 +161,6 @@ class AppComponent extends React.Component {
     this.dragType = '';
   
     this.confFormRef = React.createRef();
-    this.mainForm = React.createRef();
     this.attrFormRef = React.createRef();
   }
 
@@ -170,8 +169,9 @@ class AppComponent extends React.Component {
       const newState = store.getState();
       const { activeItem, dragData, dropData } = newState;
       if(activeItem !== this.props.activeItem) {
-        this.setState({ confForm: activeItem });
+        this.setState({ confForm: activeItem, attrForm: activeItem.attrs });
         this.confFormRef.current.setFieldsValue(activeItem);
+        this.attrFormRef.current.setFieldsValue(activeItem.attrs);
       }
       this.dragData = dragData;
       this.dropData = dropData;
@@ -188,7 +188,6 @@ class AppComponent extends React.Component {
    */
   formItemDrag(type) {
     this.dragType = type;
-    console.log(getConf(type));
     this.formItemData = {
       type,
       formItemId: randomId(),
@@ -203,8 +202,8 @@ class AppComponent extends React.Component {
    */
   mainDrop() {
     const cellId = randomId();
-    this.setState((prevState) => {
-      const mainData = prevState.mainData;
+    this.setState((state) => {
+      const mainData = state.mainData;
       mainData.push({
         cellId,
         children: [{...this.formItemData, pCellId: cellId }]
@@ -222,27 +221,32 @@ class AppComponent extends React.Component {
  * @param {object} cell 
  */
   removeCell(cell) {
-    const { mainData } = this.state;
-    const cellIndex = mainData.indexOf(cell);
-    if(cellIndex === -1) return;
-    mainData.splice(cellIndex, 1)
-    this.setState({ mainData: mainData });
+    this.setState((state) => {
+      const cellIndex = state.mainData.indexOf(cell);
+      if(cellIndex === -1) return {};
+      state.mainData.splice(cellIndex, 1)
+      return { mainData: state.mainData }
+    })
   }
 
   confFormChange(changeVal) {
     const key = Object.keys(changeVal)[0];
-    const { confForm } = this.state;
-    if(!confForm.hasOwnProperty(key)) return;
-    confForm[key] = changeVal[key];
-    this.setState({ confForm: confForm });
+    this.setState((state) => {
+      state.confForm[key] = changeVal[key];
+      return {
+        confForm: state.confForm
+      }
+    })
   }
 
   attrFormChange(changeVal) {
     const key = Object.keys(changeVal)[0];
-    const { confForm } = this.state;
-    if(!confForm.hasOwnProperty(key)) return;
-    confForm[key] = changeVal[key];
-    this.setState({ confForm: confForm });
+    this.setState((state) => {
+      state.attrForm[key] = changeVal[key];
+      return {
+        attrForm: state.attrForm
+      }
+    })
   }
 
   /**
@@ -250,13 +254,10 @@ class AppComponent extends React.Component {
    * @param {array} param: 选项数组
    */
   setOptions(options) {
-    const { confForm } = this.state;
-    if(!confForm.name.length) {
-      message.warn('请先填写字段名');
-      return false;
-    }
-    confForm.options = options;
-    this.setState({ confForm: confForm });
+    this.setState((state) => {
+      state.attrForm.options = options;
+      return { attrForm: state.attrForm };
+    })
   }
 
   /**
@@ -264,9 +265,9 @@ class AppComponent extends React.Component {
    * @param {object} option 
    */
   removeOption(option) {
-    const { confForm } = this.state;
-    const optionIndex = confForm.options.indexOf(option);
-    if(optionIndex > -1) confForm.options.splice(optionIndex, 1);
+    const { attrForm } = this.state;
+    const optionIndex = attrForm.options.indexOf(option);
+    if(optionIndex > -1) attrForm.options.splice(optionIndex, 1);
   }
 
   getFormData() {
