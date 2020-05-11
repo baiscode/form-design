@@ -70,7 +70,8 @@ const UploadItem = () => {
 }
 
 const OptionTable = ({ modelOptions, setOptions }) => {
-  const [options, setState] = useState(objCopy(modelOptions));
+  const [options, setState] = useState(modelOptions);
+  console.log(options, modelOptions);
   const changeOption = function(key, value, target) {
     const opts = objCopy(options);
     if(!key) {
@@ -124,6 +125,14 @@ const OptionTable = ({ modelOptions, setOptions }) => {
   return <Table columns={columns} dataSource={options} pagination={false}></Table>
 }
 
+const RadioItem = ({ formData, setOptions }) => {
+  return <section>
+            <Form.Item label="选项">
+              <OptionTable modelOptions={formData.options} setOptions={setOptions}></OptionTable>
+            </Form.Item>
+         </section>
+}
+
 const CheckItem = ({ formData, setOptions }) => {
   return <section>
             <Form.Item label="选项">
@@ -166,8 +175,7 @@ class AppComponent extends React.Component {
 
   componentDidMount() {
     this.unsubscribe = store.subscribe(() => {
-      const newState = store.getState();
-      const { activeItem, dragData, dropData } = newState;
+      const { activeItem, dragData, dropData } = store.getState();
       if(activeItem !== this.props.activeItem) {
         this.setState({ confForm: activeItem, attrForm: activeItem.attrs });
         this.confFormRef.current.setFieldsValue(activeItem);
@@ -348,8 +356,9 @@ class AppComponent extends React.Component {
                       case 'UPLOAD':
                         return  <UploadItem formData={attrForm}></UploadItem>
                       case 'CHECKBOX':
-                      case 'RADIO':
                         return  <CheckItem formData={attrForm} setOptions={(...args) => this.setOptions(...args)}></CheckItem>
+                      case 'RADIO':
+                        return  <RadioItem formData={attrForm} setOptions={(...args) => this.setOptions(...args)}></RadioItem>
                       case 'SELECT':
                         return <SelectItem formData={attrForm} setOptions={(...args) => this.setOptions(...args)}></SelectItem>
                       default:
