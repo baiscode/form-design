@@ -93,11 +93,7 @@ class MainForm extends React.Component {
     if(targetI === -1) return;
     oriCell.children.splice(targetI, 1)
     // 如果当前行中没有任何表单元素，则删除当前行
-    if(!oriCell.children.length) {
-      setTimeout(() => {
-        this.props.removeCell(oriCell);
-      }, 300)
-    }
+    if(!oriCell.children.length) this.props.removeCell(oriCell);
   }
 
   formSubmit(values) {

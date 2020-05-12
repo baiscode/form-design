@@ -209,6 +209,7 @@ class AppComponent extends React.Component {
    * 表单区域drop事件
    */
   mainDrop() {
+    if(!this.props.initDrag) return;
     const cellId = randomId();
     this.setState((state) => {
       const mainData = state.mainData;
@@ -382,6 +383,7 @@ const mapStateToProps = function(state) {
     dragData: state.dragData,
     dropData: state.dropData,
     activeItem: state.activeItem,
+    initDrag: state.initDrag
   }
 }
 
