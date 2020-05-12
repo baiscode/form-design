@@ -84,7 +84,7 @@ class FormItem extends React.Component {
     const { activeItem, formLabelStyle } = this.state;
     const { type, name, isRequired, labelName, message, attrs, showTime } = formItem;
     return (
-      <div className={isProd ? 'prod-form-item' : `dev-form-item ${formItem === activeItem ? 'active' : ''}`} draggable={!isProd} onDragStart={() => this.formItemDrag()} onClick={(e) => !isProd && this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
+      <div className={isProd ? 'prod-form-item' : `dev-form-item ${formItem.formItemId === activeItem.formItemId ? 'active' : ''}`} draggable={!isProd} onDragStart={() => this.formItemDrag()} onClick={(e) => !isProd && this.setActiveFormItem(e)} onDrop={() => this.formItemDrop()}>
           <label className={`form-item-label ${isRequired ? 'required': ''}`} style={formLabelStyle} ref={this.labelRef}>{labelName}</label>
           <div className="form-item-box">
             <Form.Item name={name} rules={isProd ? [{ required: isRequired, message: message }] : []}>

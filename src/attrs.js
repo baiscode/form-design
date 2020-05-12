@@ -27,7 +27,6 @@ const formItems = {
 for(let i in formItems) {
   const value = formItems[i];
   const defConf = {
-    name: `${i}_${randomId()}`,
     isRequired: true,
     fontSize: 14,
     textAlign: 'center',
@@ -76,6 +75,7 @@ const getConf = function(type) {
       break;
   }
   formItems[type].attrs = attrs;
+  formItems[type].name = `${type}_${randomId()}`;
   return formItems[type];
 }
 
